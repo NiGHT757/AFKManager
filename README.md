@@ -7,6 +7,7 @@ This is not a fully tested version!
 Config File with 3 Settings:
   - Chat Prefix (Prefix in Chat)
   - Warnings (How Many Warnings Should Be Issued Before Moving Player to Spectator)
+  - Punishment options (0 - kill | 1 - kill + move to spectator | 2 - kick)
   - Offset (This Is the "CCSPlayerController_ChangeTeam" Offset)
 
 # Requirements:
