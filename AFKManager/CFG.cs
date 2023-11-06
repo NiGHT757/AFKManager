@@ -42,8 +42,9 @@ internal class CFG
 		Config config = new Config
 		{
 			ChatPrefix = "[{LightRed}AFK{Default}]",
-            Offset = 89,
-            Warnings = 3
+			Warnings = 3,
+			Punishment = 1,
+            Offset = 89
 		};
 
 		// Serialize the config object to JSON and write it to the file.
@@ -79,5 +80,6 @@ internal class Config
 {
 	public string? ChatPrefix { get; set; }
     public int Warnings { get; set; }
-	public int Offset { get; set; }
+    public int Punishment { get; set; }
+    public int Offset { get; set; }
 }
