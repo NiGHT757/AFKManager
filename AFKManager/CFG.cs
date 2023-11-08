@@ -25,8 +25,41 @@ internal class CFG
 			config = JsonSerializer.Deserialize<Config>(sr.ReadToEnd());
 		}
 
-		if (config != null && config.ChatPrefix != null)
-			config.ChatPrefix = ModifyColorValue(config.ChatPrefix);
+		if (config != null)
+		{
+			if(config.ChatPrefix != null)
+				config.ChatPrefix = ModifyColorValue(config.ChatPrefix);
+
+			if(config.ChatMoveMessage != null)
+				config.ChatMoveMessage = ModifyColorValue(config.ChatMoveMessage);
+
+			if(config.ChatKickMessage != null)
+				config.ChatKickMessage = ModifyColorValue(config.ChatKickMessage);
+
+			if(config.ChatKillMessage != null)
+				config.ChatKillMessage = ModifyColorValue(config.ChatKillMessage);
+
+			if(config.ChatWarningKillMessage != null)
+				config.ChatWarningKillMessage = ModifyColorValue(config.ChatWarningKillMessage);
+
+			if(config.ChatWarningMoveMessage != null)
+				config.ChatWarningMoveMessage = ModifyColorValue(config.ChatWarningMoveMessage);
+
+			if(config.ChatWarningKickMessage != null)
+				config.ChatWarningKickMessage = ModifyColorValue(config.ChatWarningKickMessage);
+
+            if (config.Punishment < 0 || config.Punishment > 2)
+            {
+                config.Punishment = 1;
+                Console.WriteLine("AFK Manager: Punishment value is invalid, setting to default value (1).");
+            }
+
+			if(config.Timer < 0.1f)
+			{                 
+				config.Timer = 5.0f;
+				Console.WriteLine("AFK Manager: Timer value is invalid, setting to default value (5.0).");
+			}
+        }
 	}
 
 	private static void CreateAndWriteFile(string path)
@@ -41,9 +74,17 @@ internal class CFG
 
 		Config config = new Config
 		{
-			ChatPrefix = "[{LightRed}AFK{Default}]",
-			Warnings = 3,
+            WhiteListUsers = new List<ulong>() { 76561198143759075 },
+            ChatPrefix = "[{LightRed}AFK{Default}]",
+			ChatMoveMessage = "{chatprefix} {playername} was moved to SPEC being AFK.",
+            ChatKillMessage = "{chatprefix} {playername} was killed for being AFK.",
+			ChatKickMessage = "{chatprefix} {playername} was kicked for being AFK.",
+            ChatWarningKickMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll be kicked in {Darkred}{time}{Default} seconds.",
+			ChatWarningMoveMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll be moved to SPEC in {Darkred}{time}{Default} seconds.",
+			ChatWarningKillMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll killed in {Darkred}{time}{Default} seconds.",
+            Warnings = 3,
 			Punishment = 1,
+			Timer = 5.0f,
             Offset = 89
 		};
 
@@ -78,8 +119,17 @@ internal class CFG
 
 internal class Config
 {
+	public List<ulong> WhiteListUsers { get; set; }
 	public string? ChatPrefix { get; set; }
+	public string? ChatKickMessage { get; set; }
+	public string? ChatMoveMessage { get; set; }
+	public string? ChatKillMessage { get; set; }
+	public string? ChatWarningKickMessage { get; set; }
+	public string? ChatWarningMoveMessage { get; set; }
+	public string? ChatWarningKillMessage { get; set; }
+
     public int Warnings { get; set; }
     public int Punishment { get; set; }
+	public float Timer { get; set; }
     public int Offset { get; set; }
 }
