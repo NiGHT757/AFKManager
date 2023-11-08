@@ -4,10 +4,13 @@ A simple AFK Manager plugin for CS2.
 This is not a fully tested version!
 
 # Features:
-Config File with 3 Settings:
+Config File with Settings:
   - Chat Prefix (Prefix in Chat)
   - Warnings (How Many Warnings Should Be Issued Before Moving Player to Spectator)
   - Punishment options (0 - kill | 1 - kill + move to spectator | 2 - kick)
+  - All messages can be configured through the configuration file.
+  - Whitelist players (only in steamid64 format) to skip them during AFK verification.
+  - Timer (Adjust the timer interval)
   - Offset (This Is the "CCSPlayerController_ChangeTeam" Offset)
 
 # Requirements:
