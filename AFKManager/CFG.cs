@@ -2,6 +2,7 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using System.Reflection;
 using System.Text.Json;
+using System.Xml;
 
 namespace AFKManager;
 
@@ -9,7 +10,7 @@ internal class CFG
 {
 	public static Config config = new();
 
-	public void CheckConfig(string moduleDirectory)
+    public void CheckConfig(string moduleDirectory)
 	{
 		string path = Path.Join(moduleDirectory, "config.json");
 
@@ -74,14 +75,20 @@ internal class CFG
 
 		Config config = new Config
 		{
-            WhiteListUsers = new List<ulong>() { 76561198143759075 },
-            ChatPrefix = "[{LightRed}AFK{Default}]",
+			// create dictionary with default values
+			WhiteListUsers = new Dictionary<ulong, Whitelist>()
+			{
+				{ 76561198143759075, new Whitelist { SkipAFK = true, SkipSPEC = false } }
+			},
+			ChatPrefix = "[{LightRed}AFK{Default}]",
 			ChatMoveMessage = "{chatprefix} {playername} was moved to SPEC being AFK.",
-            ChatKillMessage = "{chatprefix} {playername} was killed for being AFK.",
+			ChatKillMessage = "{chatprefix} {playername} was killed for being AFK.",
 			ChatKickMessage = "{chatprefix} {playername} was kicked for being AFK.",
-            ChatWarningKickMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll be kicked in {Darkred}{time}{Default} seconds.",
+			ChatWarningKickMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll be kicked in {Darkred}{time}{Default} seconds.",
 			ChatWarningMoveMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll be moved to SPEC in {Darkred}{time}{Default} seconds.",
 			ChatWarningKillMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll killed in {Darkred}{time}{Default} seconds.",
+			SpecWarnPlayerEveryXSeconds = 20,
+			SpecKickPlayerAfterXWarnings = 5,
             Warnings = 3,
 			Punishment = 1,
 			Timer = 5.0f,
@@ -116,10 +123,17 @@ internal class CFG
 		return string.IsNullOrEmpty(msg) ? "[AFK]" : msg;
 	}
 }
+// Add some default random values to WhiteListUsers dictionary
+// WhiteListUsers = new Dictionary<
+//     ulong, Whitelist>() { 76561198143759075, new Whitelist { SkipAFK = true, SkipSPEC = false } },
+//     76561198143759075, new Whitelist { SkipAFK = false, SkipSPEC = true } },
+//     76561198143759075, new Whitelist { SkipAFK = true, SkipSPEC = true } },
+//     76561198143759075, new Whitelist { SkipAFK = false, SkipSPEC = false } },
+//     76561198143759075, new Whitelist { SkipAFK = true, SkipSPEC = false } },
 
 internal class Config
 {
-	public List<ulong> WhiteListUsers { get; set; }
+	public Dictionary<ulong, Whitelist> WhiteListUsers { get; set; }
 	public string? ChatPrefix { get; set; }
 	public string? ChatKickMessage { get; set; }
 	public string? ChatMoveMessage { get; set; }
@@ -130,6 +144,14 @@ internal class Config
 
     public int Warnings { get; set; }
     public int Punishment { get; set; }
+	public int SpecWarnPlayerEveryXSeconds { get; set; }
+	public int SpecKickPlayerAfterXWarnings { get; set; }
 	public float Timer { get; set; }
     public int Offset { get; set; }
+}
+
+public class Whitelist
+{
+    public bool SkipAFK { get; set; }
+    public bool SkipSPEC { get; set; }
 }
