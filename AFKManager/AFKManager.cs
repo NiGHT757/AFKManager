@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
+using System.Net.Sockets;
 
 namespace AFKManager;
 public class AFKManager : BasePlugin
@@ -9,7 +10,7 @@ public class AFKManager : BasePlugin
     #region definitions
     public override string ModuleAuthor => "NiGHT & K4ryuu";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.0.5";
+    public override string ModuleVersion => "0.0.6";
     public static string Directory = string.Empty;
     private CCSGameRules? g_GameRulesProxy = null;
 
@@ -116,6 +117,8 @@ public class AFKManager : BasePlugin
         if (g_GameRulesProxy.GamePaused || g_GameRulesProxy.FreezePeriod || g_GameRulesProxy.WarmupPeriod)
             return;
 
+        string sFormat = null; 
+
         for (int i = 1; i <= Server.MaxPlayers; i++)
         {
             CCSPlayerController player = Utilities.GetPlayerFromIndex(i);
@@ -123,7 +126,7 @@ public class AFKManager : BasePlugin
                 continue;
 
             #region AFK Time
-            if (!g_PlayerAbsOrigin[i].Whitelisted.SkipAFK && player.PawnIsAlive && (player.TeamNum == 2 || player.TeamNum == 3))
+            if (CFG.config.Warnings != 0 && !g_PlayerAbsOrigin[i].Whitelisted.SkipAFK && player.PawnIsAlive && (player.TeamNum == 2 || player.TeamNum == 3))
             {
                 g_PlayerAbsOrigin[i].SpecWarningCount = 0;
                 g_PlayerAbsOrigin[i].fAfkTime = 0;
@@ -142,7 +145,6 @@ public class AFKManager : BasePlugin
                 if (g_PlayerAbsOrigin[i].Angles.X == angles.X && g_PlayerAbsOrigin[i].Angles.Y == angles.Y &&
                         g_PlayerAbsOrigin[i].Origin.X == origin.X && g_PlayerAbsOrigin[i].Origin.Y == origin.Y)
                 {
-                    string sFormat = null;
                     if (g_PlayerAbsOrigin[i].WarningCount == CFG.config.Warnings)
                     {
                         g_PlayerAbsOrigin[i].WarningCount = 0;
@@ -229,7 +231,7 @@ public class AFKManager : BasePlugin
             }
             #endregion
             #region SPEC Time
-            if (!g_PlayerAbsOrigin[i].Whitelisted.SkipSPEC && player.TeamNum == 1)
+            if (CFG.config.SpecKickPlayerAfterXWarnings != 0 && !g_PlayerAbsOrigin[i].Whitelisted.SkipSPEC && player.TeamNum == 1)
             {
                 g_PlayerAbsOrigin[i].fAfkTime += CFG.config.Timer;
 
@@ -237,6 +239,11 @@ public class AFKManager : BasePlugin
                 {
                     if (g_PlayerAbsOrigin[i].SpecWarningCount == CFG.config.SpecKickPlayerAfterXWarnings)
                     {
+                        sFormat = CFG.config.ChatKickMessage;
+                        sFormat = sFormat.Replace("{chatprefix}", CFG.config.ChatPrefix);
+                        sFormat = sFormat.Replace("{playername}", player.PlayerName);
+                        Server.PrintToChatAll(sFormat);
+
                         Server.ExecuteCommand($"kickid {player.UserId}");
 
                         g_PlayerAbsOrigin[i].SpecWarningCount = 0;
@@ -244,7 +251,10 @@ public class AFKManager : BasePlugin
                         continue;
                     }
 
-                    player.PrintToChat($"{CFG.config.ChatPrefix} You\'re Idle/ AFK. Move or you\'ll be kicked in {(((float)CFG.config.SpecKickPlayerAfterXWarnings * CFG.config.SpecWarnPlayerEveryXSeconds) - ((float)g_PlayerAbsOrigin[i].SpecWarningCount * CFG.config.SpecWarnPlayerEveryXSeconds)):F1} seconds.");
+                    sFormat = CFG.config.ChatWarningKickMessage;
+                    sFormat = sFormat.Replace("{chatprefix}", CFG.config.ChatPrefix);
+                    sFormat = sFormat.Replace("{time}", $"{ (((float)CFG.config.SpecKickPlayerAfterXWarnings * CFG.config.SpecWarnPlayerEveryXSeconds) - ((float)g_PlayerAbsOrigin[i].SpecWarningCount * CFG.config.SpecWarnPlayerEveryXSeconds)):F1}");
+                    player.PrintToChat(sFormat);
                     g_PlayerAbsOrigin[i].SpecWarningCount++;
                     g_PlayerAbsOrigin[i].fAfkTime = 0; // reset counter
                 }

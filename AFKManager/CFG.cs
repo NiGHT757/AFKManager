@@ -121,13 +121,6 @@ internal class CFG
 		return string.IsNullOrEmpty(msg) ? "[AFK]" : msg;
 	}
 }
-// Add some default random values to WhiteListUsers dictionary
-// WhiteListUsers = new Dictionary<
-//     ulong, Whitelist>() { 76561198143759075, new Whitelist { SkipAFK = true, SkipSPEC = false } },
-//     76561198143759075, new Whitelist { SkipAFK = false, SkipSPEC = true } },
-//     76561198143759075, new Whitelist { SkipAFK = true, SkipSPEC = true } },
-//     76561198143759075, new Whitelist { SkipAFK = false, SkipSPEC = false } },
-//     76561198143759075, new Whitelist { SkipAFK = true, SkipSPEC = false } },
 
 internal class Config
 {
