@@ -11,6 +11,8 @@ Config File with Settings:
   - All messages can be configured through the configuration file.
   - Whitelist players (only in steamid64 format) to skip them during AFK verification.
   - Timer (Adjust the timer interval)
+  - SpecWarnPlayerEveryXSeconds ( issue a warning every x seconds )
+  - SpecKickPlayerAfterXWarnings ( kick player after x warnings issued )
   - Offset (This Is the "CCSPlayerController_ChangeTeam" Offset)
 
 # Requirements:
