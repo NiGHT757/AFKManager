@@ -9,7 +9,7 @@ public class AFKManager : BasePlugin
     #region definitions
     public override string ModuleAuthor => "NiGHT & K4ryuu";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.0.4";
+    public override string ModuleVersion => "0.0.5";
     public static string Directory = string.Empty;
     private CCSGameRules? g_GameRulesProxy = null;
 
@@ -52,7 +52,7 @@ public class AFKManager : BasePlugin
                 {
                     Angles = new QAngle(),
                     Origin = new Vector(),
-                    Whitelisted = null,
+                    Whitelisted = new Whitelist(),
                     SpecWarningCount = 0,
                     fAfkTime = 0,
                     WarningCount = 0
@@ -85,7 +85,7 @@ public class AFKManager : BasePlugin
                         {
                             Angles = new QAngle(),
                             Origin = new Vector(),
-                            Whitelisted = null,
+                            Whitelisted = new Whitelist(),
                             SpecWarningCount = 0,
                             fAfkTime = 0,
                             WarningCount = 0

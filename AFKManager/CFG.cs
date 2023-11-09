@@ -1,8 +1,6 @@
-using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using System.Reflection;
 using System.Text.Json;
-using System.Xml;
 
 namespace AFKManager;
 
