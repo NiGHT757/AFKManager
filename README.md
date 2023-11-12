@@ -1,6 +1,5 @@
 # [CS2] AFK Manager
 A simple AFK Manager plugin for CS2.
-
 This is not a fully tested version!
 
 # Features:
@@ -13,10 +12,11 @@ Config File with Settings:
   - Timer (Adjust the timer interval)
   - SpecWarnPlayerEveryXSeconds ( issue a warning every x seconds )
   - SpecKickPlayerAfterXWarnings ( kick player after x warnings issued, 0 - to disable )
+  - SpecKickMinPlayers (minimum number of players to kick).
   - Offset (This Is the "CCSPlayerController_ChangeTeam" Offset)
 
 # Requirements:
-[CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) 
+[CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) v43 or higher
 
 # Credits:
 [K4ryuu](https://github.com/K4ryuu) - Helping me with config file and other things.
