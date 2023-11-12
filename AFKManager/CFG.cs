@@ -58,6 +58,12 @@ internal class CFG
 				config.Timer = 5.0f;
 				Console.WriteLine("AFK Manager: Timer value is invalid, setting to default value (5.0).");
 			}
+
+			if(config.SpecWarnPlayerEveryXSeconds < config.Timer)
+			{
+				config.SpecWarnPlayerEveryXSeconds = config.Timer;
+				Console.WriteLine($"AFK Manager: The value of SpecWarnPlayerEveryXSeconds is less than the value of Timer, SpecWarnPlayerEveryXSeconds will be forced to {config.Timer}");
+            }
         }
 	}
 
@@ -85,10 +91,11 @@ internal class CFG
 			ChatWarningKickMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll be kicked in {Darkred}{time}{Default} seconds.",
 			ChatWarningMoveMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll be moved to SPEC in {Darkred}{time}{Default} seconds.",
 			ChatWarningKillMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll killed in {Darkred}{time}{Default} seconds.",
-			SpecWarnPlayerEveryXSeconds = 20,
+			SpecWarnPlayerEveryXSeconds = 20.0f,
 			SpecKickPlayerAfterXWarnings = 5,
             Warnings = 3,
 			Punishment = 1,
+			SpecKickMinPlayers = 5,
 			Timer = 5.0f,
             Offset = 89
 		};
@@ -135,12 +142,12 @@ internal class Config
 
     public int Warnings { get; set; }
     public int Punishment { get; set; }
-	public int SpecWarnPlayerEveryXSeconds { get; set; }
+	public float SpecWarnPlayerEveryXSeconds { get; set; }
 	public int SpecKickPlayerAfterXWarnings { get; set; }
+	public int SpecKickMinPlayers { get; set; }
 	public float Timer { get; set; }
     public int Offset { get; set; }
 }
-
 public class Whitelist
 {
     public bool SkipAFK { get; set; }

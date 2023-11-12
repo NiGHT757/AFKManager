@@ -1,19 +1,22 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
-using System.Net.Sockets;
 
 namespace AFKManager;
+
+[MinimumApiVersion(43)]
 public class AFKManager : BasePlugin
 {
     #region definitions
     public override string ModuleAuthor => "NiGHT & K4ryuu";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.0.6";
+    public override string ModuleVersion => "0.0.7";
     public static string Directory = string.Empty;
     private CCSGameRules? g_GameRulesProxy = null;
-
+    
     // create a class that store player AbsOrigin
     private class PlayerAbsOrigin
     {
@@ -38,7 +41,7 @@ public class AFKManager : BasePlugin
         {
             g_GameRulesProxy = null;
         });
-
+        
         #region OnClientConnected
         RegisterListener<Listeners.OnClientConnected>(playerSlot =>
         {
@@ -118,7 +121,9 @@ public class AFKManager : BasePlugin
             return;
 
         string sFormat = null; 
-
+        // check how many players are connected on server
+        var players = Utilities.GetPlayers().Count;
+        
         for (int i = 1; i <= Server.MaxPlayers; i++)
         {
             CCSPlayerController player = Utilities.GetPlayerFromIndex(i);
@@ -231,7 +236,7 @@ public class AFKManager : BasePlugin
             }
             #endregion
             #region SPEC Time
-            if (CFG.config.SpecKickPlayerAfterXWarnings != 0 && !g_PlayerAbsOrigin[i].Whitelisted.SkipSPEC && player.TeamNum == 1)
+            if (CFG.config.SpecKickPlayerAfterXWarnings != 0 && players >= CFG.config.SpecKickMinPlayers && !g_PlayerAbsOrigin[i].Whitelisted.SkipSPEC && player.TeamNum == 1)
             {
                 g_PlayerAbsOrigin[i].fAfkTime += CFG.config.Timer;
 
@@ -264,3 +269,5 @@ public class AFKManager : BasePlugin
         }
     }
 }
+
+
