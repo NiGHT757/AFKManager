@@ -79,11 +79,6 @@ internal class CFG
 
 		Config config = new Config
 		{
-			// create dictionary with default values
-			WhiteListUsers = new Dictionary<ulong, Whitelist>()
-			{
-				{ 76561198143759075, new Whitelist { SkipAFK = true, SkipSPEC = false } }
-			},
 			ChatPrefix = "[{LightRed}AFK{Default}]",
 			ChatMoveMessage = "{chatprefix} {playername} was moved to SPEC being AFK.",
 			ChatKillMessage = "{chatprefix} {playername} was killed for being AFK.",
@@ -93,11 +88,13 @@ internal class CFG
 			ChatWarningKillMessage = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll killed in {Darkred}{time}{Default} seconds.",
 			SpecWarnPlayerEveryXSeconds = 20.0f,
 			SpecKickPlayerAfterXWarnings = 5,
+			SpecSkipFlag = "@css/skipspec",
+			SkipFlag = "@css/skipafk",
             Warnings = 3,
 			Punishment = 1,
 			SpecKickMinPlayers = 5,
-			Timer = 5.0f,
-            Offset = 89
+			SpecKickOnlyMovedByPlugin = false,
+			Timer = 5.0f
 		};
 
 		// Serialize the config object to JSON and write it to the file.
@@ -125,13 +122,12 @@ internal class CFG
 			return modifiedValue;
 		}
 
-		return string.IsNullOrEmpty(msg) ? "[AFK]" : msg;
+		return string.IsNullOrEmpty(msg) ? "" : msg;
 	}
 }
 
 internal class Config
 {
-	public Dictionary<ulong, Whitelist> WhiteListUsers { get; set; }
 	public string? ChatPrefix { get; set; }
 	public string? ChatKickMessage { get; set; }
 	public string? ChatMoveMessage { get; set; }
@@ -145,11 +141,8 @@ internal class Config
 	public float SpecWarnPlayerEveryXSeconds { get; set; }
 	public int SpecKickPlayerAfterXWarnings { get; set; }
 	public int SpecKickMinPlayers { get; set; }
+	public bool SpecKickOnlyMovedByPlugin { get; set; }
+	public string? SpecSkipFlag { get; set; }
 	public float Timer { get; set; }
-    public int Offset { get; set; }
-}
-public class Whitelist
-{
-    public bool SkipAFK { get; set; }
-    public bool SkipSPEC { get; set; }
+	public string? SkipFlag { get; set; }
 }
