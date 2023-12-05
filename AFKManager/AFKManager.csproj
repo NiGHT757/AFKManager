@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="CFG.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="CounterStrikeSharp.API">
       <HintPath>C:\Users\Pc\Downloads\CounterStrikeSharp.API.dll</HintPath>
     </Reference>
