@@ -2,13 +2,12 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AFKManager;
-
-[MinimumApiVersion(63)]
 
 public class AFKManagerConfig : BasePluginConfig
 {
@@ -36,13 +35,14 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     #region definitions
     public override string ModuleAuthor => "NiGHT & K4ryuu";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.0.9";
+    public override string ModuleVersion => "0.1.0";
     
-    public required AFKManagerConfig Config { get; set; } 
+    public required AFKManagerConfig Config { get; set; }
+    private CCSGameRules? _gGameRulesProxy;
     
     private static string ModifyColorValue(string msg)
     {
-        if (!msg.Contains('{')) return string.IsNullOrEmpty(msg) ? "[TeamBet]" : msg;
+        if (!msg.Contains('{')) return string.IsNullOrEmpty(msg) ? "[AFK]" : msg;
         var modifiedValue = msg;
         foreach (var field in typeof(ChatColors).GetFields())
         {
@@ -55,6 +55,17 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 modifiedValue = $" {modifiedValue}";
         }
         return modifiedValue;
+    }
+
+    private static char GetTeamColor(CsTeam team)
+    {
+        return team switch
+        {
+            CsTeam.Spectator => ChatColors.Grey,
+            CsTeam.Terrorist => ChatColors.Red,
+            CsTeam.CounterTerrorist => ChatColors.Blue,
+            _ => ChatColors.Default
+        };
     }
     
     public void OnConfigParsed(AFKManagerConfig config)
@@ -87,12 +98,8 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
             Console.WriteLine($"AFK Manager: The value of SpecWarnPlayerEveryXSeconds is less than the value of Timer, SpecWarnPlayerEveryXSeconds will be forced to {Config.Timer}");
         }
         
-        _afkTimer?.Kill();
-        _afkTimer = AddTimer(Config.Timer, AfkTimer_Callback, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
+        AddTimer(Config.Timer, AfkTimer_Callback, TimerFlags.REPEAT);
     }
-    
-    private CCSGameRules? _gGameRulesProxy;
-    private CounterStrikeSharp.API.Modules.Timers.Timer? _afkTimer;
     
     private class PlayerInfo
     {
@@ -104,109 +111,43 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
         public bool MovedByPlugin { get; set; }
     }
     
-    private Dictionary<uint, PlayerInfo> _gPlayerInfo = new Dictionary<uint, PlayerInfo>();
+    private readonly Dictionary<uint, PlayerInfo> _gPlayerInfo = new();
     #endregion
 
     public override void Load(bool hotReload)
     {
-        RegisterListener<Listeners.OnMapStart>(mapName =>
+        RegisterListener<Listeners.OnMapStart>(_ =>
         {
-            _afkTimer?.Kill();
-            _afkTimer = null;
-
-            AddTimer(0.5f, () =>
-            {
-                _afkTimer = AddTimer(Config.Timer, AfkTimer_Callback, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
-
-            }, TimerFlags.STOP_ON_MAPCHANGE);
-            
             _gGameRulesProxy = null;
         });
         
-        RegisterListener<Listeners.OnServerHibernationUpdate>(hibernating =>
+        RegisterListener<Listeners.OnMapEnd>(() =>
         {
-            if (hibernating) return;
-            _afkTimer ??= AddTimer(Config.Timer, AfkTimer_Callback, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
+            _gPlayerInfo.Clear();
+            _gGameRulesProxy = null;
         });
         
         #region OnClientConnected
         RegisterListener<Listeners.OnClientConnected>(playerSlot =>
         {
             var finalSlot = (uint)playerSlot + 1;
-
-            if (!_gPlayerInfo.ContainsKey(finalSlot))
+            
+            if (_gPlayerInfo.ContainsKey(finalSlot))
+                return;
+            
+            _gPlayerInfo.Add(finalSlot, new PlayerInfo
             {
-                _gPlayerInfo.Add(finalSlot, new PlayerInfo
-                {
-                    Angles = new QAngle(),
-                    Origin = new Vector(),
-                    SpecWarningCount = 0,
-                    SpecAfkTime = 0,
-                    WarningCount = 0
-                });
-            }
+                Angles = new QAngle(),
+                Origin = new Vector(),
+                SpecWarningCount = 0,
+                SpecAfkTime = 0,
+                WarningCount = 0
+            });
         });
         
         RegisterListener<Listeners.OnClientDisconnectPost>(playerSlot =>
         {
             _gPlayerInfo.Remove((uint)playerSlot + 1);
-        });
-        
-        RegisterEventHandler<EventPlayerTeam>((@event, info) =>
-        {
-            var player = @event.Userid;
-            if (!player.IsValid || player.IsBot)
-                return HookResult.Continue;
-            
-            var i = player.Index;
-
-            if (!_gPlayerInfo.TryGetValue(i, out var value)) return HookResult.Continue;
-            
-            value.SpecAfkTime = 0;
-            value.SpecWarningCount = 0;
-            value.WarningCount = 0;
-                
-            if(@event.Team != 1)
-                value.MovedByPlugin = false;
-            return HookResult.Continue;
-        });
-        
-        RegisterEventHandler<EventPlayerSpawn>((@event, info) =>
-        {
-            var player = @event.Userid;
-            if(!player.IsValid || player.IsBot)
-                return HookResult.Continue;
-
-            AddTimer(0.2f, () =>
-            {
-                if (!player.IsValid || !player.PawnIsAlive)
-                    return;
-                
-                var i = player.Index;
-                if(!_gPlayerInfo.TryGetValue(i, out var data))
-                    return;
-                
-                var angles = player.PlayerPawn.Value?.EyeAngles;
-                var origin = player.PlayerPawn.Value?.CBodyComponent?.SceneNode?.AbsOrigin;
-                
-                data.Angles = new QAngle(
-                    x: angles?.X,
-                    y: angles?.Y,
-                    z: angles?.Z
-                );
-                
-                data.Origin = new Vector(
-                    x: origin?.X,
-                    y: origin?.Y,
-                    z: origin?.Z
-                );
-
-                data.SpecAfkTime = 0;
-                data.SpecWarningCount = 0;
-                data.MovedByPlugin = false;
-            });
-            
-            return HookResult.Continue;
         });
         #endregion
         #region hotReload
@@ -214,7 +155,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
         {
             AddTimer(1.0f, () =>
             {
-                var players = Utilities.GetPlayers().Where(x => !x.IsBot);
+                var players = Utilities.GetPlayers().Where(x => x is { IsBot: false, Connected: PlayerConnectedState.PlayerConnected });
 
                 foreach (var player in players)
                 {
@@ -232,11 +173,69 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                         });
                     }
                 }
-                
-                _afkTimer ??= AddTimer(Config.Timer, AfkTimer_Callback, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
             });
         }
         #endregion
+    }
+    
+    [GameEventHandler]
+    public HookResult EventPlayerTeam(EventPlayerTeam @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+        if (player == null || !player.IsValid || player.IsBot)
+            return HookResult.Continue;
+            
+        var i = player.Index;
+
+        if (!_gPlayerInfo.TryGetValue(i, out var value)) return HookResult.Continue;
+            
+        value.SpecAfkTime = 0;
+        value.SpecWarningCount = 0;
+        value.WarningCount = 0;
+                
+        if(@event.Team != 1)
+            value.MovedByPlugin = false;
+        
+        return HookResult.Continue;
+    }
+    
+    [GameEventHandler]
+    public HookResult EventPlayerSpawn(EventPlayerSpawn @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+        if (player == null || !player.IsValid || player.IsBot)
+            return HookResult.Continue;
+
+        AddTimer(0.2f, () =>
+        {
+            if (player == null || !player.IsValid || !player.PawnIsAlive)
+                return;
+                
+            var i = player.Index;
+            if(!_gPlayerInfo.TryGetValue(i, out var data))
+                return;
+                
+            var angles = player.PlayerPawn.Value?.EyeAngles;
+            var origin = player.PlayerPawn.Value?.CBodyComponent?.SceneNode?.AbsOrigin;
+                
+            data.Angles = new QAngle(
+                x: angles?.X,
+                y: angles?.Y,
+                z: angles?.Z
+            );
+                
+            data.Origin = new Vector(
+                x: origin?.X,
+                y: origin?.Y,
+                z: origin?.Z
+            );
+
+            data.SpecAfkTime = 0;
+            data.SpecWarningCount = 0;
+            data.MovedByPlugin = false;
+        });
+            
+        return HookResult.Continue;
     }
     
     private void AfkTimer_Callback()
@@ -256,7 +255,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
 
         string? sFormat = null; 
         
-        var players = Utilities.GetPlayers().Where(x => x != null && !x.IsBot);
+        var players = Utilities.GetPlayers().Where(x => x is { IsBot: false, Connected: PlayerConnectedState.PlayerConnected });
         var playersCount = players.Count();
         
         foreach (var player in players)
@@ -294,27 +293,28 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                         switch (Config.Punishment)
                         {
                             case 0:
-                                sFormat = Config.ChatKillMessage.Replace("{chatprefix}", Config.ChatPrefix).Replace("{playername}", player.PlayerName);
+                                sFormat = Config.ChatKillMessage.Replace("{chatprefix}", Config.ChatPrefix).Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
+                                    GetTeamColor((CsTeam)player.TeamNum).ToString());
 
                                 playerPawn?.CommitSuicide(false, true);
-                                Server.PrintToChatAll(sFormat);
                                 break;
                             case 1:
-                                sFormat = Config.ChatMoveMessage?.Replace("{chatprefix}", Config.ChatPrefix).Replace("{playername}", player.PlayerName);
+                                sFormat = Config.ChatMoveMessage?.Replace("{chatprefix}", Config.ChatPrefix).Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
+                                    GetTeamColor((CsTeam)player.TeamNum).ToString());
 
                                 playerPawn?.CommitSuicide(false, true);
                                 player.ChangeTeam(CsTeam.Spectator);
-
-                                Server.PrintToChatAll(sFormat ?? string.Empty);
                                 break;
                             case 2:
-                                sFormat = Config.ChatKickMessage?.Replace("{chatprefix}", Config.ChatPrefix).Replace("{playername}", player.PlayerName);
+                                sFormat = Config.ChatKickMessage?.Replace("{chatprefix}", Config.ChatPrefix)
+                                    .Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
+                                        GetTeamColor((CsTeam)player.TeamNum).ToString());
 
                                 Server.ExecuteCommand($"kickid {player.UserId}");
-                                Server.PrintToChatAll(sFormat ?? string.Empty);
                                 break;
                         }
                         
+                        Server.PrintToChatAll(sFormat ?? string.Empty);
                         continue;
                     }
 
@@ -363,7 +363,8 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
             if (!(data.SpecAfkTime >= Config.SpecWarnPlayerEveryXSeconds)) continue; // for example, warn player every 20 seconds ( add +1 warn every 20 sec )
             if (_gPlayerInfo[i].SpecWarningCount == Config.SpecKickPlayerAfterXWarnings)
             {
-                sFormat = Config.ChatKickMessage?.Replace("{chatprefix}", Config.ChatPrefix).Replace("{playername}", player.PlayerName);
+                sFormat = Config.ChatKickMessage?.Replace("{chatprefix}", Config.ChatPrefix).Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
+                    GetTeamColor((CsTeam)player.TeamNum).ToString());
                         
                 Server.PrintToChatAll(sFormat ?? string.Empty);
                 Server.ExecuteCommand($"kickid {player.UserId}");
@@ -374,7 +375,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
             }
 
             sFormat = Config.ChatWarningKickMessage?.Replace("{chatprefix}", Config.ChatPrefix)
-                .Replace("{time}", $"{ ((Config.SpecKickPlayerAfterXWarnings * Config.SpecWarnPlayerEveryXSeconds) - (data.SpecWarningCount * Config.SpecWarnPlayerEveryXSeconds)):F1}");
+                .Replace("{time}", $"{ Config.SpecKickPlayerAfterXWarnings * Config.SpecWarnPlayerEveryXSeconds - data.SpecWarningCount * Config.SpecWarnPlayerEveryXSeconds:F1}");
                     
             player.PrintToChat(sFormat ?? string.Empty);
             data.SpecWarningCount++;
