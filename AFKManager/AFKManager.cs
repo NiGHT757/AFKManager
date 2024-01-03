@@ -155,7 +155,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
         RegisterEventHandler<EventPlayerTeam>((@event, info) =>
         {
             var player = @event.Userid;
-            if (!player.IsValid || player.IsBot)
+            if (player == null || !player.IsValid || player.IsBot)
                 return HookResult.Continue;
             
             var i = player.Index;
@@ -174,12 +174,12 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
         RegisterEventHandler<EventPlayerSpawn>((@event, info) =>
         {
             var player = @event.Userid;
-            if(!player.IsValid || player.IsBot)
+            if(player == null || !player.IsValid || player.IsBot)
                 return HookResult.Continue;
 
             AddTimer(0.2f, () =>
             {
-                if (!player.IsValid || !player.PawnIsAlive)
+                if (player == null || !player.IsValid || !player.PawnIsAlive)
                     return;
                 
                 var i = player.Index;
