@@ -1,6 +1,5 @@
 # [CS2] AFK Manager
-A simple AFK Manager plugin for CS2.
-This is not a fully tested version!
+A simple AFK Manager plugin for CS2 based on [player-checker by sazonische from CS:GO](https://github.com/sazonische/player-checker/blob/master/addons/sourcemod/scripting/player_checker.sp)
 
 # Features:
 Config File located in **/addons/counterstrikesharp/configs/plugins/AFKManager** with Settings:
@@ -21,6 +20,10 @@ Config File located in **/addons/counterstrikesharp/configs/plugins/AFKManager**
 [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) v110 or higher
 
 # Credits:
-[K4ryuu](https://github.com/K4ryuu) - Helping me with config file and other things.
+[K4ryuu](https://github.com/K4ryuu) - Helping with config file and other things before CSS's config implementation.
 
-xstage - Helping with the "changeTeam" function in order to properly move players to SPEC.
+xstage - Helping with the "changeTeam" function before CSS version ~90 in order to properly move players to SPEC.
+
+sazonische - [player-checker](https://github.com/sazonische/player-checker/blob/master/addons/sourcemod/scripting/player_checker.sp)
+
+B3none - Plugin ideas.
