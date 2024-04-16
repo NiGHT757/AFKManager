@@ -312,7 +312,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                         _ => sFormat
                     };
 
-                    sFormat = sFormat?.Replace("{playername}", player.PlayerName).Replace("{time}", $"{((Config.Warnings * Config.Timer) - (_gPlayerInfo[i].WarningCount * Config.Timer)):D}");
+                    sFormat = sFormat?.Replace("{playername}", player.PlayerName).Replace("{time}", $"{((Config.Warnings * Config.Timer) - (_gPlayerInfo[i].WarningCount * Config.Timer)):F1}");
                     
                     player.PrintToChat(Localizer["ChatPrefix"] + sFormat);
                     
