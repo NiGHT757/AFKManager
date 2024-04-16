@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using CounterStrikeSharp.API;
+﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
@@ -11,23 +10,17 @@ namespace AFKManager;
 
 public class AFKManagerConfig : BasePluginConfig
 {
-    [JsonPropertyName("ChatPrefix")] public string ChatPrefix { get; set; } = "[{LightRed}AFK{Default}]";
-    [JsonPropertyName("ChatKickMessage")] public string ChatKickMessage { get; set; } = "{chatprefix} {playername} was kicked for being AFK.";
-    [JsonPropertyName("ChatMoveMessage")] public string ChatMoveMessage { get; set; } = "{chatprefix} {playername} was moved to SPEC being AFK.";
-    [JsonPropertyName("ChatKillMessage")] public string ChatKillMessage { get; set; } = "{chatprefix} {playername} was killed for being AFK.";
-    [JsonPropertyName("ChatWarningKickMessage")] public string ChatWarningKickMessage { get; set; } = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll be kicked in {Darkred}{time}{Default} seconds.";
-    [JsonPropertyName("ChatWarningMoveMessage")] public string ChatWarningMoveMessage { get; set; } = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll be moved to SPEC in {Darkred}{time}{Default} seconds.";
-    [JsonPropertyName("ChatWarningKillMessage")] public string ChatWarningKillMessage { get; set; } = "{chatprefix} You\'re{LightRed} Idle/ AFK{Default}. Move or you\'ll killed in {Darkred}{time}{Default} seconds.";
-    [JsonPropertyName("SpecWarnPlayerEveryXSeconds")] public float SpecWarnPlayerEveryXSeconds { get; set; } = 20.0f;
-    [JsonPropertyName("SpecKickPlayerAfterXWarnings")] public int SpecKickPlayerAfterXWarnings { get; set; } = 5;
-    [JsonPropertyName("SpecKickMinPlayers")] public int SpecKickMinPlayers { get; set; } = 5;
-    [JsonPropertyName("SpecKickOnlyMovedByPlugin")] public bool SpecKickOnlyMovedByPlugin { get; set; } = false;
-    [JsonPropertyName("SpecSkipFlag")] public string SpecSkipFlag { get; set; } = "";
-    [JsonPropertyName("SkipFlag")] public string SkipFlag { get; set; } = "";
-    [JsonPropertyName("Warnings")] public int Warnings { get; set; } = 3;
-    [JsonPropertyName("Punishment")] public int Punishment { get; set; } = 1;
-    [JsonPropertyName("Retake")] public bool Retake { get; set; } = false;
-    [JsonPropertyName("Timer")] public float Timer { get; set; } = 5.0f;
+    public float SpecWarnPlayerEveryXSeconds { get; set; } = 20.0f;
+    public int SpecKickPlayerAfterXWarnings { get; set; } = 5;
+    public int SpecKickMinPlayers { get; set; } = 5;
+    public bool SpecKickOnlyMovedByPlugin { get; set; } = false;
+    public List<string> SpecSkipFlag { get; set; } = [..new[] { "@css/root", "@css/ban" }];
+    public List<string> SkipFlag { get; set; } = [..new[] { "@css/root", "@css/ban" }];
+    public int Warnings { get; set; } = 3;
+    public int Punishment { get; set; } = 1;
+    public bool Retake { get; set; } = false;
+    public bool PlaySound { get; set; } = true;
+    public float Timer { get; set; } = 5.0f;
 }
 
 public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
@@ -39,23 +32,6 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     
     public required AFKManagerConfig Config { get; set; }
     private CCSGameRules? _gGameRulesProxy;
-    
-    private static string ModifyColorValue(string msg)
-    {
-        if (!msg.Contains('{')) return string.IsNullOrEmpty(msg) ? "" : msg;
-        var modifiedValue = msg;
-        foreach (var field in typeof(ChatColors).GetFields())
-        {
-            var pattern = $"{{{field.Name}}}";
-            if (msg.Contains(pattern, StringComparison.OrdinalIgnoreCase))
-            {
-                modifiedValue = modifiedValue.Replace(pattern, field.GetValue(null)?.ToString(), StringComparison.OrdinalIgnoreCase);
-            }
-            if (msg.StartsWith(pattern, StringComparison.OrdinalIgnoreCase))
-                modifiedValue = $" {modifiedValue}";
-        }
-        return modifiedValue;
-    }
 
     private static char GetTeamColor(CsTeam team)
     {
@@ -71,14 +47,6 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     public void OnConfigParsed(AFKManagerConfig config)
     {
         Config = config;
-        
-        Config.ChatPrefix = ModifyColorValue(Config.ChatPrefix);
-        Config.ChatMoveMessage = ModifyColorValue(Config.ChatMoveMessage).Replace("{chatprefix}", Config.ChatPrefix);
-        Config.ChatKickMessage = ModifyColorValue(Config.ChatKickMessage).Replace("{chatprefix}", Config.ChatPrefix);
-        Config.ChatKillMessage = ModifyColorValue(Config.ChatKillMessage).Replace("{chatprefix}", Config.ChatPrefix);
-        Config.ChatWarningKillMessage = ModifyColorValue(Config.ChatWarningKillMessage).Replace("{chatprefix}", Config.ChatPrefix);
-        Config.ChatWarningMoveMessage = ModifyColorValue(Config.ChatWarningMoveMessage).Replace("{chatprefix}", Config.ChatPrefix);
-        Config.ChatWarningKickMessage = ModifyColorValue(Config.ChatWarningKickMessage).Replace("{chatprefix}", Config.ChatPrefix);
 
         if (Config.Punishment is < 0 or > 2)
         {
@@ -290,7 +258,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 if(Config.Retake && (CsTeam)player.TeamNum != CsTeam.CounterTerrorist)
                     continue;
                 
-                if(Config.SkipFlag != string.Empty && AdminManager.PlayerHasPermissions(player, Config.SkipFlag))
+                if(Config.SkipFlag.Count >= 1 && AdminManager.PlayerHasPermissions(player, Config.SkipFlag.ToArray()))
                     continue;
                 
                 var playerPawn = player.PlayerPawn.Value;
@@ -312,41 +280,45 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                         switch (Config.Punishment)
                         {
                             case 0:
-                                sFormat = Config.ChatKillMessage.Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
+                                sFormat = Localizer["ChatKickMessage"].Value.Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
                                     GetTeamColor((CsTeam)player.TeamNum).ToString());
 
                                 playerPawn?.CommitSuicide(false, true);
                                 break;
                             case 1:
-                                sFormat = Config.ChatMoveMessage?.Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
+                                sFormat = Localizer["ChatMoveMessage"].Value.Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
                                     GetTeamColor((CsTeam)player.TeamNum).ToString());
 
                                 playerPawn?.CommitSuicide(false, true);
                                 player.ChangeTeam(CsTeam.Spectator);
                                 break;
                             case 2:
-                                sFormat = Config.ChatKickMessage?.Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
+                                sFormat = Localizer["ChatKickMessage"].Value.Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
                                         GetTeamColor((CsTeam)player.TeamNum).ToString());
 
                                 Server.ExecuteCommand($"kickid {player.UserId}");
                                 break;
                         }
                         
-                        Server.PrintToChatAll(sFormat ?? string.Empty);
+                        Server.PrintToChatAll(Localizer["ChatPrefix"] + sFormat);
                         continue;
                     }
 
                     sFormat = Config.Punishment switch
                     {
-                        0 => Config.ChatWarningKillMessage,
-                        1 => Config.ChatWarningMoveMessage,
-                        2 => Config.ChatWarningKickMessage,
+                        0 => Localizer["ChatWarningKillMessage"].Value,
+                        1 => Localizer["ChatWarningMoveMessage"].Value,
+                        2 => Localizer["ChatWarningKickMessage"].Value,
                         _ => sFormat
                     };
 
                     sFormat = sFormat?.Replace("{playername}", player.PlayerName).Replace("{time}", $"{((Config.Warnings * Config.Timer) - (_gPlayerInfo[i].WarningCount * Config.Timer)):F1}");
                     
-                    player.PrintToChat(sFormat ?? string.Empty);
+                    player.PrintToChat(Localizer["ChatPrefix"] + sFormat);
+                    
+                    if (Config.PlaySound)
+                        player.ExecuteClientCommand("play player/damage1");
+                    
                     data.WarningCount++;
                 }
                 else
@@ -374,7 +346,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 && player.TeamNum == 1
                 && playersCount >= Config.SpecKickMinPlayers)
             {
-                if(Config.SpecKickOnlyMovedByPlugin && !data.MovedByPlugin || Config.SpecSkipFlag != string.Empty && AdminManager.PlayerHasPermissions(player, Config.SpecSkipFlag))
+                if(Config.SpecKickOnlyMovedByPlugin && !data.MovedByPlugin || Config.SpecSkipFlag.Count >= 1 && AdminManager.PlayerHasPermissions(player, Config.SpecSkipFlag.ToArray()))
                     continue;
                 
                 data.SpecAfkTime += Config.Timer;
@@ -384,10 +356,10 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 
                 if (data.SpecWarningCount == Config.SpecKickPlayerAfterXWarnings)
                 {
-                    sFormat = Config.ChatKickMessage?.Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
+                    sFormat = Localizer["ChatKickMessage"].Value.Replace("{playername}", player.PlayerName).Replace("{teamcolor}",
                         GetTeamColor((CsTeam)player.TeamNum).ToString());
 
-                    Server.PrintToChatAll(sFormat ?? string.Empty);
+                    Server.PrintToChatAll(Localizer["ChatPrefix"] + sFormat);
                     Server.ExecuteCommand($"kickid {player.UserId}");
 
                     data.SpecWarningCount = 0;
@@ -395,10 +367,10 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                     continue;
                 }
 
-                sFormat = Config.ChatWarningKickMessage?.Replace("{time}",
+                sFormat = Localizer["ChatWarningKickMessage"].Value.Replace("{time}",
                     $"{Config.SpecKickPlayerAfterXWarnings * Config.SpecWarnPlayerEveryXSeconds - data.SpecWarningCount * Config.SpecWarnPlayerEveryXSeconds:F1}");
 
-                player.PrintToChat(sFormat ?? string.Empty);
+                player.PrintToChat(Localizer["ChatPrefix"] + sFormat);
                 data.SpecWarningCount++;
                 data.SpecAfkTime = 0; // reset counter
             }
