@@ -1,8 +1,8 @@
 ﻿{
   "ChatPrefix": "{purple}[AFK]{default} » ",
-  "ChatKickMessage": "{playername} was kicked for being AFK.",
-  "ChatMoveMessage": "{playername} was moved to SPEC being AFK.",
-  "ChatKillMessage": "{playername} was killed for being AFK.",
+  "ChatKickMessage": "{grey}{playername}{default} was {lime}kicked{default} for being {darkred}AFK{default}.",
+  "ChatMoveMessage": "{grey}{playername}{default} was {lime}moved{default} to SPEC being {darkred}AFK{default}.",
+  "ChatKillMessage": "{grey}{playername}{default} was {lime}killed{default} for being {darkred}AFK{default}.",
   "ChatWarningKickMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}kicked{default} in {lightblue}{time}{default} seconds.",
   "ChatWarningMoveMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}moved{default} to SPEC in {lightblue}{time}{default} seconds.",
   "ChatWarningKillMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}killed{default} in {lightblue}{time}{default} seconds."
