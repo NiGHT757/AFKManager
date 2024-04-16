@@ -26,9 +26,9 @@ public class AFKManagerConfig : BasePluginConfig
 public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
 {
     #region definitions
-    public override string ModuleAuthor => "NiGHT & K4ryuu";
+    public override string ModuleAuthor => "NiGHT & K4ryuu (forked by Глеб Хлебов)";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.1.1";
+    public override string ModuleVersion => "0.1.2";
     
     public required AFKManagerConfig Config { get; set; }
     private CCSGameRules? _gGameRulesProxy;
