@@ -3,7 +3,7 @@
   "ChatKickMessage": "{playername} was kicked for being AFK.",
   "ChatMoveMessage": "{playername} was moved to SPEC being AFK.",
   "ChatKillMessage": "{playername} was killed for being AFK.",
-  "ChatWarningKickMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lightgreen}kicked{default} in {lightblue}{time}{default} seconds.",
-  "ChatWarningMoveMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lightgreen}moved{default} to SPEC in {lightblue}{time}{default} seconds.",
-  "ChatWarningKillMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lightgreen}killed{default} in {lightblue}{time}{default} seconds."
+  "ChatWarningKickMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}kicked{default} in {lightblue}{time}{default} seconds.",
+  "ChatWarningMoveMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}moved{default} to SPEC in {lightblue}{time}{default} seconds.",
+  "ChatWarningKillMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}killed{default} in {lightblue}{time}{default} seconds."
 }
