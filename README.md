@@ -1,4 +1,7 @@
 # [CS2] AFK Manager
+[![Downloads](https://img.shields.io/github/downloads/NiGHT757/AFKManager/total.svg)](https://github.com/USERNAME/REPOSITORY/releases)
+[![License](https://img.shields.io/github/license/NiGHT757/AFKManager.svg)](https://github.com/USERNAME/REPOSITORY/blob/main/LICENSE)
+
 A simple AFK Manager plugin for CS2 based on [player-checker by sazonische from CS:GO](https://github.com/sazonische/player-checker/blob/master/addons/sourcemod/scripting/player_checker.sp)
 
 # Features:
