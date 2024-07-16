@@ -1,9 +1,13 @@
 ﻿{
   "ChatPrefix": "{purple}[AFK]{default} » ",
-  "ChatKickMessage": "{grey}{playername}{default} was {lime}kicked{default} for being {darkred}AFK{default}.",
-  "ChatMoveMessage": "{grey}{playername}{default} was {lime}moved{default} to SPEC being {darkred}AFK{default}.",
-  "ChatKillMessage": "{grey}{playername}{default} was {lime}killed{default} for being {darkred}AFK{default}.",
-  "ChatWarningKickMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}kicked{default} in {lightblue}{time}{default} seconds.",
-  "ChatWarningMoveMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}moved{default} to SPEC in {lightblue}{time}{default} seconds.",
-  "ChatWarningKillMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}killed{default} in {lightblue}{time}{default} seconds."
+  "ChatKickMessage": "{grey}{playerName}{default} was {lime}kicked{default} for being {darkred}AFK{default}.",
+  "ChatMoveMessage": "{grey}{playerName}{default} was {lime}moved{default} to SPEC being {darkred}AFK{default}.",
+  "ChatKillMessage": "{grey}{playerName}{default} was {lime}killed{default} for being {darkred}AFK{default}.",
+  "ChatWarningKickMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}kicked{default} in {lightblue}{timeAmount}{default} seconds.",
+  "ChatWarningMoveMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}moved{default} to SPEC in {lightblue}{timeAmount}{default} seconds.",
+  "ChatWarningKillMessage": "You're {darkred}Idle/AFK{default}. Move or you'll be {lime}killed{default} in {lightblue}{timeAmount}{default} seconds.",
+  "AntiCampSlayMessage": "{grey}{playerName}{default} was {lime}slayed{default} for camping in {green}@{zoneName}{default} with weapon {lime}{weaponName}{default}.",
+  "AntiCampSlapMessage": "{grey}{playerName}{default} was {lime}slapped{default} with {red}{slapAmount} damage{default} for camping in {green}@{zoneName}{default} with weapon {lime}{weaponName}{default}.",
+  "AntiCampSlayWarningMessage": "Stop camping in {green}@{zoneName}{default} with weapon {lime}{weaponName}{default} or you'll be {lime}slayed{default} in {lightblue}{timeAmount}{default} seconds.",
+  "AntiCampSlapWarningMessage": "Stop camping in {green}@{zoneName}{default} with weapon {lime}{weaponName}{default} or you'll be {lime}slapped{default} with {red}{slapAmount} damage{default} in {lightblue}{timeAmount}{default} seconds."
 }
