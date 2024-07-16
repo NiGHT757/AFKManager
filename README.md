@@ -6,18 +6,25 @@ A simple AFK Manager plugin for CS2 based on [player-checker by sazonische from 
 
 # Features:
 Config File located in **/addons/counterstrikesharp/configs/plugins/AFKManager** with Settings:
-  - Chat Prefix (Prefix in Chat)
-  - Warnings (How Many Warnings Should Be Issued Before Moving Player to Spectator, 0 - to disable)
-  - Punishment options (0 - kill | 1 - kill + move to spectator | 2 - kick)
-  - All messages can be configured through the configuration file.
-  - Timer (Adjust the timer interval)
-  - SpecWarnPlayerEveryXSeconds ( issue a warning every x seconds )
-  - SpecKickPlayerAfterXWarnings ( kick player after x warnings issued, 0 - to disable )
-  - SpecKickMinPlayers (minimum number of players to kick).
-  - SkipFlag ( Skip players with that flag during AFK verification )
-  - SpecSkipFlag ( Skip SPEC players with that flag during AFK verification )
-  - SpecKickOnlyMovedByPlugin ( Only check SPEC players that were moved by AFK Manager )
-  - Retake ( Only check CT players )
+  - SpecWarnPlayerEveryXSeconds: Issue a warning every X seconds.
+  - SpecKickPlayerAfterXWarnings: Kick the player after X warnings are issued (set to 0 to disable).
+  - SpecKickMinPlayers: Minimum number of players required to kick.
+  - SpecKickOnlyMovedByPlugin: Only check players in spectator mode who were moved by AFK Manager.
+  - SpecSkipFlag: Skip players in spectator mode with this flag during AFK verification.
+  - SkipFlag: Skip players with this flag during AFK verification.
+  - AntiCampSkipFlag: Skip players with this flag during AntiCamp verification.
+  - Warnings: Number of warnings to issue before moving a player to spectator mode (set to 0 to disable).
+  - Punishment: Punishment type (0 - kill, 1 - kill + move to spectator, 2 - kick).
+  - PlaySoundName: Play a sound (leave empty to disable).
+  - SkipWarmup: Skip checks during warmup.
+  - AntiCampRadius: Distance check in units.
+  - AntiCampPunishment: Punishment type for camping (0 - slay, 1 - slap).
+  - AntiCampSlapDamage: Damage dealt by slap (set to 0 for no damage).
+  - AntiCampWarnPlayerEveryXSeconds: Issue a warning every X seconds for camping.
+  - AntiCampPunishPlayerAfterXWarnings: Punish the player after X warnings for camping (set to 0 to disable).
+  - AntiCampSkipBombPlanted: Skip camping checks if the bomb is planted (set to true to enable).
+  - AntiCampSkipTeam: Skip camping checks for a specific team (2 - Terrorists, 3 - Counter-Terrorists).
+  - Timer: Adjust the timer for player checks.
 
 # Requirements:
 [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) v110 or higher
