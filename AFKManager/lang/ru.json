@@ -1,9 +1,0 @@
-﻿{
-  "ChatPrefix": "{purple}[AFK]{default} » ",
-  "ChatKickMessage": "{grey}{playername}{default} был {lime}кикнут{default} за {darkred}AFK{default}.",
-  "ChatMoveMessage": "{grey}{playername}{default} был {lime}перемещен{default} в SPEC за {darkred}AFK{default}.",
-  "ChatKillMessage": "{grey}{playername}{default} был {lime}убит{default} за {darkred}AFK{default}.",
-  "ChatWarningKickMessage": "Система считает Вас {darkred}AFK{default}. Играйте или будете {lime}кикнуты{default} через {lightblue}{time}{default} сек.",
-  "ChatWarningMoveMessage": "Система считает Вас {darkred}AFK{default}. Играйте или будете {lime}перемещены в SPEC{default} через {lightblue}{time}{default} сек.",
-  "ChatWarningKillMessage": "Система считает Вас {darkred}AFK{default}. Играйте или {lime}убиты{default} через {lightblue}{time}{default} сек."
-}
