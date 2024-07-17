@@ -1,0 +1,13 @@
+{
+  "ChatPrefix": "{purple}[AFK]{default} » ",
+  "ChatKickMessage": "{grey}{playerName}{default} foi {lime}expulso{default} por estar {darkred}AFK{default}.",
+  "ChatMoveMessage": "{grey}{playerName}{default} foi {lime}movido{default} para ESPEC por estar {darkred}AFK{default}.",
+  "ChatKillMessage": "{grey}{playerName}{default} foi {lime}morto{default} por estar {darkred}AFK{default}.",
+  "ChatWarningKickMessage": "Você está {darkred}Inativo/AFK{default}. Mova-se ou será {lime}expulso{default} em {lightblue}{timeAmount}{default} segundos.",
+  "ChatWarningMoveMessage": "Você está {darkred}Inativo/AFK{default}. Mova-se ou será {lime}movido{default} para ESPEC em {lightblue}{timeAmount}{default} segundos.",
+  "ChatWarningKillMessage": "Você está {darkred}Inativo/AFK{default}. Mova-se ou será {lime}morto{default} em {lightblue}{timeAmount}{default} segundos.",
+  "AntiCampSlayMessage": "{grey}{playerName}{default} recebeu {lime}slay{default} por camperar em {green}@{zoneName}{default} com a arma {lime}{weaponName}{default}.",
+  "AntiCampSlapMessage": "{grey}{playerName}{default} recebeu {lime}slap{default} com {red}{slapAmount} de dano{default} por camperar em {green}@{zoneName}{default} com a arma {lime}{weaponName}{default}.",
+  "AntiCampSlayWarningMessage": "Pare de camperar em {green}@{zoneName}{default} com a arma {lime}{weaponName}{default} ou receberá {lime}slap{default} em {lightblue}{timeAmount}{default} segundos.",
+  "AntiCampSlapWarningMessage": "Pare de camperar em {green}@{zoneName}{default} com a arma {lime}{weaponName}{default} ou receberá {lime}slap{default} com {red}{slapAmount} de dano{default} em {lightblue}{timeAmount}{default} segundos."
+}
