@@ -21,7 +21,7 @@ Config File located in **/addons/counterstrikesharp/configs/plugins/AFKManager**
   - AntiCampPunishment: Punishment type for camping (0 - slay, 1 - slap).
   - AntiCampSlapDamage: Damage dealt by slap (set to 0 for no damage).
   - AntiCampWarnPlayerEveryXSeconds: Issue a warning every X seconds for camping.
-  - AntiCampPunishPlayerAfterXWarnings: Punish the player after X warnings for camping (set to 0 to disable).
+  - AntiCampPunishPlayerAfterXWarnings: Punish the player after X warnings for camping (set to 0 to disable AntiCamp feature).
   - AntiCampSkipBombPlanted: Skip camping checks if the bomb is planted (set to true to enable).
   - AntiCampSkipTeam: Skip camping checks for a specific team (2 - Terrorists, 3 - Counter-Terrorists).
   - Timer: Adjust the timer for player checks.
