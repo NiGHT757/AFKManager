@@ -10,23 +10,23 @@ namespace AFKManager;
 
 public class AFKManagerConfig : BasePluginConfig
 {
-    public float SpecWarnPlayerEveryXSeconds { get; set; } = 20.0f;
-    public int SpecKickPlayerAfterXWarnings { get; set; } = 5;
+    public int AfkPunishAfterWarnings { get; set; } = 3;
+    public int AfkPunishment { get; set; } = 1;
+    public float AfkWarnInterval { get; set; } = 5.0f;
+    public float SpecWarnInterval { get; set; } = 20.0f;
+    public int SpecKickAfterWarnings { get; set; } = 5;
     public int SpecKickMinPlayers { get; set; } = 5;
     public bool SpecKickOnlyMovedByPlugin { get; set; } = false;
     public List<string> SpecSkipFlag { get; set; } = [..new[] { "@css/root", "@css/ban" }];
-    public List<string> SkipFlag { get; set; } = [..new[] { "@css/root", "@css/ban" }];
+    public List<string> AfkSkipFlag { get; set; } = [..new[] { "@css/root", "@css/ban" }];
     public List<string> AntiCampSkipFlag { get; set; } = [..new[] { "@css/root", "@css/ban" }];
-    public int Warnings { get; set; } = 3;
-    public int Punishment { get; set; } = 1;
     public string PlaySoundName { get; set; } = "ui/panorama/popup_reveal_01";
     public bool SkipWarmup { get; set; } = false;
-    
     public float AntiCampRadius { get; set; } = 130.0f;
     public int AntiCampPunishment { get; set; } = 1;
     public int AntiCampSlapDamage { get; set; } = 0;
-    public float AntiCampWarnPlayerEveryXSeconds { get; set; } = 10.0f;
-    public int AntiCampPunishPlayerAfterXWarnings { get; set; } = 3;
+    public float AntiCampWarnInterval { get; set; } = 10.0f;
+    public int AntiCampPunishAfterWarnings { get; set; } = 3;
     public bool AntiCampSkipBombPlanted { get; set; } = true;
     public int AntiCampSkipTeam { get; set; } = 3;
     public float Timer { get; set; } = 5.0f;
@@ -37,7 +37,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     #region definitions
     public override string ModuleAuthor => "NiGHT & K4ryuu (forked by Глеб Хлебов)";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.2.1";
+    public override string ModuleVersion => "0.2.4";
     
     public required AFKManagerConfig Config { get; set; }
     private CCSGameRules? _gGameRulesProxy;
@@ -46,10 +46,10 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     {
         Config = config;
 
-        if (Config.Punishment is < 0 or > 2)
+        if (Config.AfkPunishment is < 0 or > 2)
         {
-            Config.Punishment = 1;
-            Console.WriteLine($"{ModuleName}: Punishment value is invalid, setting to default value (1).");
+            Config.AfkPunishment = 1;
+            Console.WriteLine($"{ModuleName}: AFKPunishment value is invalid, setting to default value (1).");
         }
 
         if(Config.Timer < 0.1f)
@@ -58,16 +58,22 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
             Console.WriteLine($"{ModuleName}: Timer value is invalid, setting to default value (5.0).");
         }
 
-        if (Config.SpecWarnPlayerEveryXSeconds < Config.Timer)
+        if (Config.SpecWarnInterval < Config.Timer)
         {
-            Config.SpecWarnPlayerEveryXSeconds = Config.Timer;
-            Console.WriteLine($"{ModuleName}: The value of SpecWarnPlayerEveryXSeconds is less than the value of Timer, SpecWarnPlayerEveryXSeconds will be forced to {Config.Timer}");
+            Config.SpecWarnInterval = Config.Timer;
+            Console.WriteLine($"{ModuleName}: The value of SpecWarnInterval is less than the value of Timer, SpecWarnInterval will be forced to {Config.Timer}");
         }
         
-        if(Config.AntiCampWarnPlayerEveryXSeconds < Config.Timer)
+        if(Config.AntiCampWarnInterval < Config.Timer)
         {
-            Config.AntiCampWarnPlayerEveryXSeconds = Config.Timer;
-            Console.WriteLine($"{ModuleName}: The value of AntiCampWarnPlayerEveryXSeconds is less than the value of Timer, AntiCampWarnPlayerEveryXSeconds will be forced to {Config.Timer}");
+            Config.AntiCampWarnInterval = Config.Timer;
+            Console.WriteLine($"{ModuleName}: The value of AntiCampWarnInterval is less than the value of Timer, AntiCampWarnInterval will be forced to {Config.Timer}");
+        }
+        
+        if (Config.AntiCampPunishment is < 0 or > 1)
+        {
+            Config.AfkPunishment = 1;
+            Console.WriteLine($"{ModuleName}: AntiCampPunishment value is invalid, setting to default value (1).");
         }
         
         AddTimer(Config.Timer, AfkTimer_Callback, TimerFlags.REPEAT);
@@ -77,7 +83,8 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     {
         public QAngle? Angles { get; set; }
         public Vector? Origin { get; set; }
-        public int WarningCount { get; set; }
+        public float AfkTime { get; set; }
+        public int AfkWarningCount { get; set; }
         public int SpecWarningCount { get; set; }
         public float SpecAfkTime { get; set; }
         public bool MovedByPlugin { get; set; }
@@ -149,7 +156,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 _gGameRulesProxy =
                     Utilities.FindAllEntitiesByDesignerName<CCSGameRulesProxy>("cs_gamerules").First().GameRules ??
                         throw new Exception("Failed to find game rules proxy entity on hotReload.");
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
         #endregion
         AddCommandListener("spec_mode", OnCommandListener);
@@ -167,7 +174,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
         
         data.SpecAfkTime = 0;
         data.SpecWarningCount = 0;
-        data.WarningCount = 0;
+        data.AfkWarningCount = 0;
         
         return HookResult.Continue;
     }
@@ -183,10 +190,10 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
 
         if (!_gPlayerInfo.TryGetValue(i, out var value))
             return HookResult.Continue;
-            
+        
         value.SpecAfkTime = 0;
         value.SpecWarningCount = 0;
-        value.WarningCount = 0;
+        value.AfkWarningCount = 0;
                 
         if(@event.Team != 1)
             value.MovedByPlugin = false;
@@ -224,7 +231,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 y: origin?.Y,
                 z: origin?.Z
             );
-
+            
             data.SpecAfkTime = 0;
             data.SpecWarningCount = 0;
             data.MovedByPlugin = false;
@@ -249,7 +256,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 continue;
             
             #region AFK Time
-            if (Config.Warnings != 0 && player is { LifeState: (byte)LifeState_t.LIFE_ALIVE, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist })
+            if (player is { LifeState: (byte)LifeState_t.LIFE_ALIVE, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist })
             {
                 var playerPawn = player.PlayerPawn.Value;
                 var playerFlags = player.Pawn.Value!.Flags;
@@ -259,16 +266,21 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 
                 var angles = playerPawn?.EyeAngles;
                 var origin = player.PlayerPawn.Value?.CBodyComponent?.SceneNode?.AbsOrigin;
-
-                if (!(Config.SkipFlag.Count >= 1 && AdminManager.PlayerHasPermissions(player, Config.SkipFlag.ToArray()))
+                
+                /*  ------------------------------------------->  <-------------------------------------------  */
+                if (Config.AfkPunishAfterWarnings != 0
+                    && !(Config.AfkSkipFlag.Count >= 1 && AdminManager.PlayerHasPermissions(player, Config.AfkSkipFlag.ToArray()))
                     && data.Angles.X == angles.X && data.Angles.Y == angles.Y
                     && data.Origin.X == origin.X && data.Origin.Y == origin.Y)
                 {
-                    if (data.WarningCount == Config.Warnings)
+                    data.AfkTime += Config.Timer;
+                    
+                    if (data.AfkTime < Config.AfkWarnInterval)
+                        continue;
+                    
+                    if (data.AfkWarningCount == Config.AfkPunishAfterWarnings)
                     {
-                        data.WarningCount = 0;
-
-                        switch (Config.Punishment)
+                        switch (Config.AfkPunishment)
                         {
                             case 0:
                                 Server.PrintToChatAll(ReplaceVars(player, Localizer["ChatKillMessage"].Value));
@@ -287,33 +299,41 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                                 
                                 break;
                         }
+                        
+                        data.AfkWarningCount = 0;
+                        data.AfkTime = 0;
+                        
                         continue;
                     }
                     
-                    switch (Config.Punishment)
+                    switch (Config.AfkPunishment)
                     {
                         case 0:
-                            player.PrintToChat(ReplaceVars(player, Localizer["ChatWarningKillMessage"].Value, Config.Warnings * Config.Timer - data.WarningCount * Config.Timer));
+                            player.PrintToChat(ReplaceVars(player, Localizer["ChatWarningKillMessage"].Value, Config.AfkPunishAfterWarnings * Config.AfkWarnInterval - data.AfkWarningCount * Config.AfkWarnInterval));
                         break;
 
                         case 1:
-                            player.PrintToChat(ReplaceVars(player, Localizer["ChatWarningMoveMessage"].Value, Config.Warnings * Config.Timer - data.WarningCount * Config.Timer));
+                            player.PrintToChat(ReplaceVars(player, Localizer["ChatWarningMoveMessage"].Value, Config.AfkPunishAfterWarnings * Config.AfkWarnInterval - data.AfkWarningCount * Config.AfkWarnInterval));
                             break;
 
                         case 2:
-                            player.PrintToChat(ReplaceVars(player, Localizer["ChatWarningKickMessage"].Value, Config.Warnings * Config.Timer - data.WarningCount * Config.Timer));
+                            player.PrintToChat(ReplaceVars(player, Localizer["ChatWarningKickMessage"].Value, Config.AfkPunishAfterWarnings * Config.AfkWarnInterval - data.AfkWarningCount * Config.AfkWarnInterval));
                             break;
                     }
 
                     if (!string.IsNullOrEmpty(Config.PlaySoundName))
                         player.ExecuteClientCommand($"play {Config.PlaySoundName}");
                     
-                    data.WarningCount++;
+                    data.AfkTime = 0;
+                    data.AfkWarningCount++;
                 }
                 else
-                    data.WarningCount = 0;
-
-                if (data.WarningCount == 0 && Config.AntiCampPunishPlayerAfterXWarnings != 0
+                {
+                    data.AfkTime = 0;
+                    data.AfkWarningCount = 0;
+                }
+                /*  ------------------------------------------->  <-------------------------------------------  */
+                if (data.AfkWarningCount == 0 && Config.AntiCampPunishAfterWarnings != 0
                                            && !(Config.AntiCampSkipBombPlanted && _gGameRulesProxy.BombPlanted)
                                            && !(Config.AntiCampSkipFlag.Count >= 1 && AdminManager.PlayerHasPermissions(player, Config.AntiCampSkipFlag.ToArray()))
                                            && player.TeamNum != Config.AntiCampSkipTeam)
@@ -322,17 +342,17 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                     {
                         data.AntiCampTime += Config.Timer;
 
-                        if (!(data.AntiCampTime >= Config.AntiCampWarnPlayerEveryXSeconds))
+                        if (data.AntiCampTime < Config.AntiCampWarnInterval)
                             continue;
 
-                        if (data.AntiCampWarningCount == Config.AntiCampPunishPlayerAfterXWarnings)
+                        if (data.AntiCampWarningCount == Config.AntiCampPunishAfterWarnings)
                         {
                             switch (Config.AntiCampPunishment)
                             {
                                 case 0:
                                     Server.PrintToChatAll(ReplaceVars(player, Localizer["AntiCampSlayMessage"].Value));
 
-                                    playerPawn.CommitSuicide(false, true);
+                                    playerPawn?.CommitSuicide(false, true);
                                     break;
                                 case 1:
                                     Server.PrintToChatAll(ReplaceVars(player, Localizer["AntiCampSlapMessage"].Value));
@@ -343,24 +363,25 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                             
                             data.AntiCampWarningCount = 0;
                             data.AntiCampTime = 0;
+
+                            continue;
                         }
-                        else
+
+                        switch (Config.AntiCampPunishment)
                         {
-                            switch (Config.AntiCampPunishment)
-                            {
-                                case 0:
-                                    player.PrintToChat(ReplaceVars(player, Localizer["AntiCampSlayWarningMessage"].Value, Config.AntiCampPunishPlayerAfterXWarnings * Config.AntiCampWarnPlayerEveryXSeconds - data.AntiCampWarningCount * Config.AntiCampWarnPlayerEveryXSeconds));
-                                    break;
-                                case 1:
-                                    player.PrintToChat(ReplaceVars(player, Localizer["AntiCampSlapWarningMessage"].Value, Config.AntiCampPunishPlayerAfterXWarnings * Config.AntiCampWarnPlayerEveryXSeconds - data.AntiCampWarningCount * Config.AntiCampWarnPlayerEveryXSeconds));
-                                    break;
-                            }
-                            
-                            if (!string.IsNullOrEmpty(Config.PlaySoundName))
-                                player.ExecuteClientCommand($"play {Config.PlaySoundName}");
-                            
-                            data.AntiCampWarningCount++;
+                            case 0:
+                                player.PrintToChat(ReplaceVars(player, Localizer["AntiCampSlayWarningMessage"].Value, Config.AntiCampPunishAfterWarnings * Config.AntiCampWarnInterval - data.AntiCampWarningCount * Config.AntiCampWarnInterval));
+                                break;
+                            case 1:
+                                player.PrintToChat(ReplaceVars(player, Localizer["AntiCampSlapWarningMessage"].Value, Config.AntiCampPunishAfterWarnings * Config.AntiCampWarnInterval - data.AntiCampWarningCount * Config.AntiCampWarnInterval));
+                                break;
                         }
+                            
+                        if (!string.IsNullOrEmpty(Config.PlaySoundName))
+                            player.ExecuteClientCommand($"play {Config.PlaySoundName}");
+                            
+                        data.AntiCampWarningCount++;
+                        data.AntiCampTime = 0;
                     }
                     else
                     {
@@ -378,7 +399,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
             #endregion
             #region SPEC Time
 
-            if (Config.SpecKickPlayerAfterXWarnings != 0
+            if (Config.SpecKickAfterWarnings != 0
                 && player.TeamNum == 1
                 && playersCount >= Config.SpecKickMinPlayers)
             {
@@ -387,20 +408,21 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 
                 data.SpecAfkTime += Config.Timer;
 
-                if (!(data.SpecAfkTime >= Config.SpecWarnPlayerEveryXSeconds))
+                if (!(data.SpecAfkTime >= Config.SpecWarnInterval))
                     continue;
                 
-                if (data.SpecWarningCount == Config.SpecKickPlayerAfterXWarnings)
+                if (data.SpecWarningCount == Config.SpecKickAfterWarnings)
                 {
                     Server.PrintToChatAll(ReplaceVars(player, Localizer["ChatKickMessage"].Value));
                     Server.ExecuteCommand($"kickid {player.UserId}");
 
                     data.SpecWarningCount = 0;
                     data.SpecAfkTime = 0;
+                    
                     continue;
                 }
 
-                Server.PrintToChatAll(ReplaceVars(player, Localizer["ChatWarningKickMessage"].Value, Config.SpecKickPlayerAfterXWarnings * Config.SpecWarnPlayerEveryXSeconds - data.SpecWarningCount * Config.SpecWarnPlayerEveryXSeconds));
+                Server.PrintToChatAll(ReplaceVars(player, Localizer["ChatWarningKickMessage"].Value, Config.SpecKickAfterWarnings * Config.SpecWarnInterval - data.SpecWarningCount * Config.SpecWarnInterval));
                 data.SpecWarningCount++;
                 data.SpecAfkTime = 0;
             }
