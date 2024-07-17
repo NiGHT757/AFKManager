@@ -13,9 +13,9 @@ Config File located in **/addons/counterstrikesharp/configs/plugins/AFKManager**
   - SpecSkipFlag: Skip players in spectator mode with this flag during AFK verification.
   - SkipFlag: Skip players with this flag during AFK verification.
   - AntiCampSkipFlag: Skip players with this flag during AntiCamp verification.
-  - Warnings: Number of warnings to issue before moving a player to spectator mode (set to 0 to disable).
+  - Warnings: Number of warnings to issue before Punishment type (set to 0 to disable AFK feature).
   - Punishment: Punishment type (0 - kill, 1 - kill + move to spectator, 2 - kick).
-  - PlaySoundName: Play a sound (leave empty to disable).
+  - PlaySoundName: Play a sound after a warning is issued (leave empty to disable).
   - SkipWarmup: Skip checks during warmup.
   - AntiCampRadius: Distance check in units.
   - AntiCampPunishment: Punishment type for camping (0 - slay, 1 - slap).
@@ -27,7 +27,7 @@ Config File located in **/addons/counterstrikesharp/configs/plugins/AFKManager**
   - Timer: Adjust the timer for player checks.
 
 # Requirements:
-[CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) v110 or higher
+[CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp)
 
 # Credits:
 [K4ryuu](https://github.com/K4ryuu) - Helping with config file and other things before CSS's config implementation.
