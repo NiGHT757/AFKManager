@@ -37,7 +37,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     #region definitions
     public override string ModuleAuthor => "NiGHT & K4ryuu (forked by Глеб Хлебов)";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.2.4";
+    public override string ModuleVersion => "0.2.5";
     
     public required AFKManagerConfig Config { get; set; }
     private CCSGameRules? _gGameRulesProxy;
@@ -168,8 +168,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
         if (player == null || !player.IsValid)
             return HookResult.Continue;
         
-        var i = player.Index;
-        if (!_gPlayerInfo.TryGetValue(i, out var data))
+        if (!_gPlayerInfo.TryGetValue(player.Index, out var data))
             return HookResult.Continue;
         
         data.SpecAfkTime = 0;
@@ -185,10 +184,8 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
         var player = @event.Userid;
         if (player == null || !player.IsValid || player.IsBot)
             return HookResult.Continue;
-            
-        var i = player.Index;
 
-        if (!_gPlayerInfo.TryGetValue(i, out var value))
+        if (!_gPlayerInfo.TryGetValue(player.Index, out var value))
             return HookResult.Continue;
         
         value.SpecAfkTime = 0;
@@ -213,8 +210,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
             if (player == null || !player.IsValid || player.LifeState != (byte)LifeState_t.LIFE_ALIVE)
                 return;
                 
-            var i = player.Index;
-            if(!_gPlayerInfo.TryGetValue(i, out var data))
+            if(!_gPlayerInfo.TryGetValue(player.Index, out var data))
                 return;
                 
             var angles = player.PlayerPawn.Value?.EyeAngles;
@@ -291,6 +287,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                                 Server.PrintToChatAll(ReplaceVars(player, Localizer["ChatMoveMessage"].Value));
                                 playerPawn?.CommitSuicide(false, true);
                                 player.ChangeTeam(CsTeam.Spectator);
+                                data.MovedByPlugin = true;
                                 
                                 break;
                             case 2:
