@@ -37,7 +37,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     #region definitions
     public override string ModuleAuthor => "NiGHT & K4ryuu (forked by Глеб Хлебов)";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.2.5";
+    public override string ModuleVersion => "0.2.6";
     
     public required AFKManagerConfig Config { get; set; }
     private CCSGameRules? _gGameRulesProxy;
@@ -419,7 +419,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                     continue;
                 }
 
-                Server.PrintToChatAll(ReplaceVars(player, Localizer["ChatWarningKickMessage"].Value, Config.SpecKickAfterWarnings * Config.SpecWarnInterval - data.SpecWarningCount * Config.SpecWarnInterval));
+                player.PrintToChat( ReplaceVars(player, Localizer["ChatWarningKickMessage"].Value, Config.SpecKickAfterWarnings * Config.SpecWarnInterval - data.SpecWarningCount * Config.SpecWarnInterval));
                 data.SpecWarningCount++;
                 data.SpecAfkTime = 0;
             }
