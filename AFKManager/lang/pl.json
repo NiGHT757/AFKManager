@@ -1,0 +1,13 @@
+{
+  "ChatPrefix": "{purple}[AFK]{default} » ",
+  "ChatKickMessage": "{grey}{playerName}{default} został {lime}wyrzucony{default} za bycie {darkred}AFK{default}.",
+  "ChatMoveMessage": "{grey}{playerName}{default} został {lime}przeniesiony{default} do SPEC za bycie {darkred}AFK{default}.",
+  "ChatKillMessage": "{grey}{playerName}{default} został {lime}zabity{default} za bycie {darkred}AFK{default}.",
+  "ChatWarningKickMessage": "Jesteś {darkred}nieaktywny/AFK{default}. Rusz się, bo za {lightblue}{timeAmount}{default} sekund zostaniesz {lime}wyrzucony{default}.",
+  "ChatWarningMoveMessage": "Jesteś {darkred}nieaktywny/AFK{default}. Rusz się, bo za {lightblue}{timeAmount}{default} sekund zostaniesz {lime}przeniesiony{default} do SPEC.",
+  "ChatWarningKillMessage": "Jesteś {darkred}nieaktywny/AFK{default}. Rusz się, bo za {lightblue}{timeAmount}{default} sekund zostaniesz {lime}zabity{default}.",
+  "AntiCampSlayMessage": "{grey}{playerName}{default} został {lime}zabity{default} za kampienie w {green}@{zoneName}{default} z bronią {lime}{weaponName}{default}.",
+  "AntiCampSlapMessage": "{grey}{playerName}{default} został {lime}uderzony{default} z {red}{slapAmount} obrażeń{default} za kampienie w {green}@{zoneName}{default} z bronią {lime}{weaponName}{default}.",
+  "AntiCampSlayWarningMessage": "Przestań kampić w {green}@{zoneName}{default} z bronią {lime}{weaponName}{default}, bo za {lightblue}{timeAmount}{default} sekund zostaniesz {lime}zabity{default}.",
+  "AntiCampSlapWarningMessage": "Przestań kampić w {green}@{zoneName}{default} z bronią {lime}{weaponName}{default}, bo za {lightblue}{timeAmount}{default} sekund zostaniesz {lime}uderzony{default} z {red}{slapAmount} obrażeń{default}."
+}
