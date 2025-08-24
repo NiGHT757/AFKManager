@@ -6,8 +6,7 @@ on:
       - main
     paths-ignore:
       - 'README.md'
-      - '.github/workflows/**'
-
+      
 jobs:
   setup:
     permissions:
