@@ -14,7 +14,7 @@ env:
   DOTNET_VERSION: '8.0.x'       # CounterStrikeSharp cible .NET 8
   CONFIGURATION: Release
   # Mets ici le nom de ton projet (sans .csproj) si différent
-  PLUGIN_PROJECT: ''            # ex: MyAwesomePlugin
+  PLUGIN_PROJECT: 'AFKManager'            # ex: MyAwesomePlugin
   # Dossier final dans l’archive (structure attendue par un serveur CS2)
   CSS_PLUGIN_DIR: addons/counterstrikesharp/plugins
 
