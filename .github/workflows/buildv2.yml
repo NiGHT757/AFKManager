@@ -1,0 +1,108 @@
+name: Build v2 
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:     [ 'v*' ]          # ex: v1.2.3 -> déclenche une release
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: write   # nécessaire pour créer une Release lors d’un tag
+
+env:
+  DOTNET_VERSION: '8.0.x'       # CounterStrikeSharp cible .NET 8
+  CONFIGURATION: Release
+  # Mets ici le nom de ton projet (sans .csproj) si différent
+  PLUGIN_PROJECT: ''            # ex: MyAwesomePlugin
+  # Dossier final dans l’archive (structure attendue par un serveur CS2)
+  CSS_PLUGIN_DIR: addons/counterstrikesharp/plugins
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+
+      - name: Detect project file
+        id: detect
+        shell: bash
+        run: |
+          if [[ -n "${PLUGIN_PROJECT}" && -f "${PLUGIN_PROJECT}.csproj" ]]; then
+            echo "proj=${PLUGIN_PROJECT}.csproj" >> "$GITHUB_OUTPUT"
+          else
+            # prend le premier .csproj à la racine si PLUGIN_PROJECT n'est pas défini
+            csproj=$(ls -1 *.csproj | head -n1 || true)
+            if [[ -z "$csproj" ]]; then
+              echo "Aucun .csproj trouvé à la racine. Renseigne env.PLUGIN_PROJECT ou place le .csproj ici."
+              exit 1
+            fi
+            echo "proj=$csproj" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Detected project: $(cat $GITHUB_OUTPUT || true)"
+
+      - name: Restore
+        run: dotnet restore "${{ steps.detect.outputs.proj }}"
+
+      - name: Build
+        run: dotnet build "${{ steps.detect.outputs.proj }}" -c $CONFIGURATION --no-restore
+
+      - name: Test
+        if: hashFiles('**/*Tests.csproj') != ''
+        run: |
+          for t in $(git ls-files "*Tests.csproj"); do
+            dotnet test "$t" -c $CONFIGURATION --no-build --logger "trx;LogFileName=test-results.trx"
+          done
+
+      - name: Locate built DLL
+        id: dll
+        shell: bash
+        run: |
+          # Cherche la DLL principale du projet
+          base="${{ steps.detect.outputs.proj%.csproj }}"
+          dll=$(find . -path "*/bin/$CONFIGURATION/*" -name "${base}.dll" | head -n1)
+          if [[ -z "$dll" ]]; then
+            echo "DLL non trouvée. Vérifie que le projet produit une bibliothèque (class library)."
+            exit 1
+          fi
+          echo "path=$dll" >> "$GITHUB_OUTPUT"
+          echo "name=$base" >> "$GITHUB_OUTPUT"
+
+      - name: Package (server-ready zip)
+        id: pkg
+        shell: bash
+        run: |
+          mkdir -p out/${{ env.CSS_PLUGIN_DIR }}
+          cp "${{ steps.dll.outputs.path }}" "out/${{ env.CSS_PLUGIN_DIR }}/"
+          # Optionnel: copier fichiers additionnels (config, README, etc.)
+          if ls *.json >/dev/null 2>&1; then cp *.json "out/${{ env.CSS_PLUGIN_DIR }}/" || true; fi
+          if ls LICENSE* >/dev/null 2>&1; then cp LICENSE* out/ || true; fi
+          if ls README*  >/dev/null 2>&1; then cp README*  out/ || true; fi
+          zipname="${{ steps.dll.outputs.name }}-artifact.zip"
+          (cd out && zip -r "../$zipname" .)
+          echo "zip=$zipname" >> "$GITHUB_OUTPUT"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.dll.outputs.name }}-${{ github.sha }}
+          path: |
+            ${{ steps.pkg.outputs.zip }}
+            **/bin/${{ env.CONFIGURATION }}/**/*.dll
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Create GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.pkg.outputs.zip }}
+          generate_release_notes: true
