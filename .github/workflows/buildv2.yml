@@ -38,16 +38,18 @@ jobs:
         run: |
           if [[ -n "${PLUGIN_PROJECT}" && -f "${PLUGIN_PROJECT}.csproj" ]]; then
             echo "proj=${PLUGIN_PROJECT}.csproj" >> "$GITHUB_OUTPUT"
+            echo "base=${PLUGIN_PROJECT}" >> "$GITHUB_OUTPUT"
           else
-            # prend le premier .csproj à la racine si PLUGIN_PROJECT n'est pas défini
             csproj=$(ls -1 *.csproj | head -n1 || true)
             if [[ -z "$csproj" ]]; then
               echo "Aucun .csproj trouvé à la racine. Renseigne env.PLUGIN_PROJECT ou place le .csproj ici."
               exit 1
             fi
+            base=$(basename "$csproj" .csproj)
             echo "proj=$csproj" >> "$GITHUB_OUTPUT"
+            echo "base=$base" >> "$GITHUB_OUTPUT"
           fi
-          echo "Detected project: $(cat $GITHUB_OUTPUT || true)"
+          echo "Project file: $csproj (base=$base)"
 
       - name: Restore
         run: dotnet restore "${{ steps.detect.outputs.proj }}"
@@ -66,15 +68,13 @@ jobs:
         id: dll
         shell: bash
         run: |
-          # Cherche la DLL principale du projet
-          base="${{ steps.detect.outputs.proj%.csproj }}"
-          dll=$(find . -path "*/bin/$CONFIGURATION/*" -name "${base}.dll" | head -n1)
+          dll=$(find . -path "*/bin/$CONFIGURATION/*" -name "${{ steps.detect.outputs.base }}.dll" | head -n1)
           if [[ -z "$dll" ]]; then
             echo "DLL non trouvée. Vérifie que le projet produit une bibliothèque (class library)."
             exit 1
           fi
           echo "path=$dll" >> "$GITHUB_OUTPUT"
-          echo "name=$base" >> "$GITHUB_OUTPUT"
+          echo "name=${{ steps.detect.outputs.base }}" >> "$GITHUB_OUTPUT"
 
       - name: Package (server-ready zip)
         id: pkg
