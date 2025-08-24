@@ -1,21 +1,20 @@
-name: Build v2 
+name: Build CounterStrikeSharp Plugin
 
 on:
   push:
     branches: [ main, master ]
-    tags:     [ 'v*' ]          # ex: v1.2.3 -> déclenche une release
+    tags:     [ 'v*' ]
   pull_request:
     branches: [ main, master ]
 
 permissions:
-  contents: write   # nécessaire pour créer une Release lors d’un tag
+  contents: write
 
 env:
-  DOTNET_VERSION: '8.0.x'       # CounterStrikeSharp cible .NET 8
+  DOTNET_VERSION: '8.0.x'
   CONFIGURATION: Release
-  # Mets ici le nom de ton projet (sans .csproj) si différent
-  PLUGIN_PROJECT: 'AFKManager'            # ex: MyAwesomePlugin
-  # Dossier final dans l’archive (structure attendue par un serveur CS2)
+  # Chemin RELATIF vers le projet (ici deviné pour ton repo)
+  PLUGIN_PROJECT: 'AFKManager/AFKManager.csproj'
   CSS_PLUGIN_DIR: addons/counterstrikesharp/plugins
 
 jobs:
@@ -30,61 +29,97 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          # pas de cache nuget par lockfile pour éviter l'erreur "Dependencies lock file is not found"
 
       - name: Detect project file
         id: detect
         shell: bash
         run: |
-          if [[ -n "${PLUGIN_PROJECT}" && -f "${PLUGIN_PROJECT}.csproj" ]]; then
-            echo "proj=${PLUGIN_PROJECT}.csproj" >> "$GITHUB_OUTPUT"
-            echo "base=${PLUGIN_PROJECT}" >> "$GITHUB_OUTPUT"
-          else
-            csproj=$(ls -1 *.csproj | head -n1 || true)
-            if [[ -z "$csproj" ]]; then
-              echo "Aucun .csproj trouvé à la racine. Renseigne env.PLUGIN_PROJECT ou place le .csproj ici."
+          set -euo pipefail
+
+          # Normalisation de PLUGIN_PROJECT (avec ou sans .csproj)
+          if [[ -n "${PLUGIN_PROJECT}" ]]; then
+            if [[ -f "$PLUGIN_PROJECT" && "$PLUGIN_PROJECT" == *.csproj ]]; then
+              proj="$PLUGIN_PROJECT"
+            elif [[ -f "${PLUGIN_PROJECT%.csproj}.csproj" ]]; then
+              proj="${PLUGIN_PROJECT%.csproj}.csproj"
+            else
+              echo "::error::PLUGIN_PROJECT défini mais introuvable: '$PLUGIN_PROJECT'"
               exit 1
             fi
-            base=$(basename "$csproj" .csproj)
-            echo "proj=$csproj" >> "$GITHUB_OUTPUT"
-            echo "base=$base" >> "$GITHUB_OUTPUT"
+          else
+            mapfile -t candidates < <(git ls-files '**/*.csproj' | grep -Ev '/(bin|obj)/' || true)
+            count=${#candidates[@]}
+            if (( count == 0 )); then
+              echo "::error::Aucun .csproj trouvé. Renseigne env.PLUGIN_PROJECT."
+              exit 1
+            elif (( count > 1 )); then
+              echo "::error::Plusieurs .csproj trouvés. Spécifie env.PLUGIN_PROJECT."
+              printf '%s\n' "${candidates[@]}"
+              exit 1
+            else
+              proj="${candidates[0]}"
+            fi
           fi
-          echo "Project file: $csproj (base=$base)"
+
+          base="$(basename "$proj" .csproj)"
+          dir="$(dirname "$proj")"
+
+          echo "proj=$proj" >> "$GITHUB_OUTPUT"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "dir=$dir"   >> "$GITHUB_OUTPUT"
+
+          echo "Projet détecté: $proj (base=$base, dir=$dir)"
 
       - name: Restore
         run: dotnet restore "${{ steps.detect.outputs.proj }}"
 
       - name: Build
-        run: dotnet build "${{ steps.detect.outputs.proj }}" -c $CONFIGURATION --no-restore
+        run: dotnet build "${{ steps.detect.outputs.proj }}" -c $CONFIGURATION --no-restore -p:ContinuousIntegrationBuild=true
 
       - name: Test
         if: hashFiles('**/*Tests.csproj') != ''
         run: |
-          for t in $(git ls-files "*Tests.csproj"); do
+          set -e
+          while IFS= read -r t; do
             dotnet test "$t" -c $CONFIGURATION --no-build --logger "trx;LogFileName=test-results.trx"
-          done
+          done < <(git ls-files "**/*Tests.csproj" || true)
 
       - name: Locate built DLL
         id: dll
         shell: bash
         run: |
-          dll=$(find . -path "*/bin/$CONFIGURATION/*" -name "${{ steps.detect.outputs.base }}.dll" | head -n1)
+          set -euo pipefail
+          search_root="${{ steps.detect.outputs.dir }}/bin/${{ env.CONFIGURATION }}"
+          [[ -d "$search_root" ]] || search_root="."
+          dll=$(find "$search_root" -type f -name "${{ steps.detect.outputs.base }}.dll" | head -n1 || true)
           if [[ -z "$dll" ]]; then
-            echo "DLL non trouvée. Vérifie que le projet produit une bibliothèque (class library)."
+            echo "::error::DLL non trouvée. Vérifie que le projet est une class library et le nom attendu."
             exit 1
           fi
           echo "path=$dll" >> "$GITHUB_OUTPUT"
           echo "name=${{ steps.detect.outputs.base }}" >> "$GITHUB_OUTPUT"
+          echo "DLL: $dll"
 
       - name: Package (server-ready zip)
         id: pkg
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p out/${{ env.CSS_PLUGIN_DIR }}
           cp "${{ steps.dll.outputs.path }}" "out/${{ env.CSS_PLUGIN_DIR }}/"
-          # Optionnel: copier fichiers additionnels (config, README, etc.)
-          if ls *.json >/dev/null 2>&1; then cp *.json "out/${{ env.CSS_PLUGIN_DIR }}/" || true; fi
-          if ls LICENSE* >/dev/null 2>&1; then cp LICENSE* out/ || true; fi
-          if ls README*  >/dev/null 2>&1; then cp README*  out/ || true; fi
+
+          # Optionnel: fichiers utiles à la racine du zip
+          for f in LICENSE* README*; do
+            [[ -e "$f" ]] && cp "$f" out/ || true
+          done
+
+          # Optionnel: configs JSON depuis le dossier du projet
+          projdir="${{ steps.detect.outputs.dir }}"
+          if compgen -G "$projdir/*.json" > /dev/null; then
+            cp "$projdir/"*.json "out/${{ env.CSS_PLUGIN_DIR }}/" || true
+          fi
+
           zipname="${{ steps.dll.outputs.name }}-artifact.zip"
           (cd out && zip -r "../$zipname" .)
           echo "zip=$zipname" >> "$GITHUB_OUTPUT"
