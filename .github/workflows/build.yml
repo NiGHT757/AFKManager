@@ -1,4 +1,4 @@
-name: Build v3
+name: Build Plugins
 
 on:
   push:
