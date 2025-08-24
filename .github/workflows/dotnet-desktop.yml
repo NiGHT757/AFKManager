@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  project_name: AfkManager
+  project_name: AFKManager
 
 jobs:
   build:
@@ -38,7 +38,7 @@ jobs:
 
       - name: Zip release
         run: |
-          (cd bin/Release && zip -r ../${{ env.project_name }}-v${{ steps.buildnumber.outputs.build_number }}.zip .)
+          (cd bin/Release && zip -r ../../${{ env.project_name }}-v${{ steps.buildnumber.outputs.build_number }}.zip .)
 
       - name: Release
         id: release
