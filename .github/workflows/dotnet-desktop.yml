@@ -30,9 +30,6 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
-
       - name: Build the project
         run: dotnet build
 
