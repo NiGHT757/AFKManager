@@ -1,0 +1,84 @@
+name: Build Plugins
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      
+jobs:
+  setup:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      buildnumber: ${{ steps.buildnumber.outputs.build_number }}
+    steps:
+      - name: Generate build number
+        id: buildnumber
+        uses: onyxmueller/build-tag-number@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Prepare Environment Variables
+        shell: bash
+        run: |
+          echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=${{ needs.setup.outputs.buildnumber }}" >> $GITHUB_ENV
+
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: |
+          dotnet build AFKManager.csproj -c Release --no-restore /p:Version=1.${{ env.BUILD_NUMBER }}
+
+      - name: Create Release Artifact (ZIP) from BuildOutput
+        run: |
+          mkdir -p release
+          cd BuildOutput
+          zip -r ../AFKManager-v1.${{ env.BUILD_NUMBER }}.zip .
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v1.${{ env.BUILD_NUMBER }}
+          release_name: v1.${{ env.BUILD_NUMBER }}
+          draft: false
+          prerelease: false
+          body: |
+            ## Release Notes for v1.${{ env.BUILD_NUMBER }}
+
+            ### Changes:
+            - ${{ github.event.head_commit.message }}
+
+            ### Feedback:
+            - If you encounter any issues, please report them [here](https://github.com/${{ github.repository }}/issues).
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./AFKManager-v1.${{ env.BUILD_NUMBER }}.zip
+          asset_name: AFKManager-v1.${{ env.BUILD_NUMBER }}.zip
+          asset_content_type: application/zip
