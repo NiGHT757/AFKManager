@@ -1,6 +1,7 @@
 {
   "ChatPrefix": "{purple}[AFK]{default} » ",
   "ChatKickMessage": "{grey}{playerName}{default} foi {lime}expulso{default} por estar {darkred}AFK{default}.",
+  "ChatBombTransfer": "A bomba foi transferida → {red}{targetPlayerName}{default} porque {red}{playerName}{default} está {red}AFK{default}.",
   "ChatMoveMessage": "{grey}{playerName}{default} foi {lime}movido{default} para ESPEC por estar {darkred}AFK{default}.",
   "ChatKillMessage": "{grey}{playerName}{default} foi {lime}morto{default} por estar {darkred}AFK{default}.",
   "ChatWarningKickMessage": "Você está {darkred}Inativo/AFK{default}. Mova-se ou será {lime}expulso{default} em {lightblue}{timeAmount}{default} segundos.",

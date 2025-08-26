@@ -1,6 +1,7 @@
 {
     "ChatPrefix": "{purple}[AFK]{default} » ",
     "ChatKickMessage": "{grey}{playerName}{default} tika {lime}kickots{default} par to, ka bija {darkred}AFK{default}.",
+	"ChatBombTransfer": "Bumba tika nodota → {red}{targetPlayerName}{default}, jo {red}{playerName}{default} ir {red}AFK{default}.",
     "ChatMoveMessage": "{grey}{playerName}{default} tika {lime}pārvietots{default} uz SPEC komandu par to, ka bija {darkred}AFK{default}.",
     "ChatKillMessage": "{grey}{playerName}{default} tika {lime}nogalināts{default} par to, ka bija {darkred}AFK{default}.",
     "ChatWarningKickMessage": "Tu esi {darkred}neaktīvs/AFK{default}. Pārvietojies, citādi tiksi {lime}kickots{default} pēc {lightblue}{timeAmount}{default} sekundēm.",

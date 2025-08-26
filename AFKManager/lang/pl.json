@@ -1,6 +1,7 @@
 {
   "ChatPrefix": "{purple}[AFK]{default} » ",
   "ChatKickMessage": "{grey}{playerName}{default} został {lime}wyrzucony{default} za bycie {darkred}AFK{default}.",
+  "ChatBombTransfer": "Bomba została przeniesiona → {red}{targetPlayerName}{default}, ponieważ {red}{playerName}{default} jest {red}AFK{default}.",
   "ChatMoveMessage": "{grey}{playerName}{default} został {lime}przeniesiony{default} do SPEC za bycie {darkred}AFK{default}.",
   "ChatKillMessage": "{grey}{playerName}{default} został {lime}zabity{default} za bycie {darkred}AFK{default}.",
   "ChatWarningKickMessage": "Jesteś {darkred}nieaktywny/AFK{default}. Rusz się, bo za {lightblue}{timeAmount}{default} sekund zostaniesz {lime}wyrzucony{default}.",
