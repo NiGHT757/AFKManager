@@ -2,13 +2,15 @@
 [![Downloads](https://img.shields.io/github/downloads/NiGHT757/AFKManager/total.svg)](https://github.com/NiGHT757/AFKManager/releases)
 [![License](https://img.shields.io/github/license/NiGHT757/AFKManager.svg)](https://github.com/NiGHT757/AFKManager/blob/main/LICENSE)
 
-A simple AFK Manager plugin for CS2 based on [player-checker by sazonische from CS:GO](https://github.com/sazonische/player-checker/blob/master/addons/sourcemod/scripting/player_checker.sp)
+AFK Manager plugin for CS2 based on [player-checker by sazonische from CS:GO](https://github.com/sazonische/player-checker/blob/master/addons/sourcemod/scripting/player_checker.sp)
 
 # Features:
 Config File located in **/addons/counterstrikesharp/configs/plugins/AFKManager** with Settings:
   -	AfkPunishAfterWarnings: Number of warnings to issue before Punishment type (set to 0 to disable AFK feature).
   - AfkPunishment: Punishment type (0 - kill, 1 - kill + move to spectator, 2 - kick).
   - AfkWarnInterval: Issue a warning every X seconds for AFK.
+  - AfkTransferC4AfterWarnings: number of AFK warnings before transferring the C4 (default = 1,   0 = disabled)
+  - AfkTransferC4OnlyFromBuyZone: C4 can only be transferred if the AFK player is in the Buy Zone. (default = true)
   - SpecWarnInterval: Issue a warning every X seconds for AFK at SPEC.
   - SpecKickAfterWarnings: Kick the player after X warnings are issued (set to 0 to disable).
   - SpecKickMinPlayers: Minimum number of players required to kick.
