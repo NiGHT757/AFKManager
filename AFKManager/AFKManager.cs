@@ -3,6 +3,7 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 
@@ -13,6 +14,8 @@ public class AFKManagerConfig : BasePluginConfig
     public int AfkPunishAfterWarnings { get; set; } = 3;
     public int AfkPunishment { get; set; } = 1;
     public float AfkWarnInterval { get; set; } = 5.0f;
+    public int AfkTransferC4AfterWarnings { get; set; } = 1;
+    public bool AfkTransferC4OnlyFromBuyZone { get; set; } = true;
     public float SpecWarnInterval { get; set; } = 20.0f;
     public int SpecKickAfterWarnings { get; set; } = 5;
     public int SpecKickMinPlayers { get; set; } = 5;
@@ -37,7 +40,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     #region definitions
     public override string ModuleAuthor => "NiGHT & K4ryuu (forked by Глеб Хлебов)";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.2.6";
+    public override string ModuleVersion => "0.2.7";
     
     public required AFKManagerConfig Config { get; set; }
     private CCSGameRules? _gGameRulesProxy;
@@ -274,6 +277,27 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                     if (data.AfkTime < Config.AfkWarnInterval)
                         continue;
                     
+                    //transfer c4 to nearest player
+                    if (Config.AfkTransferC4AfterWarnings != 0 && player.TeamNum == 2 && Config.AfkTransferC4AfterWarnings == data.AfkWarningCount &&
+                        HasC4(player))
+                    {
+                        if(Config.AfkTransferC4OnlyFromBuyZone && !playerPawn.InBuyZone)
+                            continue;
+                        
+                        CCSPlayer_WeaponServices weaponService = new (player.PlayerPawn?.Value?.WeaponServices?.Handle ?? nint.Zero);
+                        CBasePlayerWeapon weapon = new(weaponService.MyWeapons.FirstOrDefault(w => w.IsValid && w.Value != null && w.Value.DesignerName == "weapon_c4")?.Value?.Handle ?? nint.Zero);
+                        if(!weapon.IsValid)
+                            continue;
+                        
+                        var nearestPlayer = FindNearestPlayer(player);
+                        if (nearestPlayer != null)
+                        {
+                            RemoveC4(weaponService,  weapon);
+                            nearestPlayer.GiveNamedItem("weapon_c4");
+                            Server.PrintToChatAll(ReplaceVars(player, Localizer["ChatBombTransfer"].Value.Replace("{targetPlayerName}", nearestPlayer.PlayerName)));
+                        }
+                    }
+                    
                     if (data.AfkWarningCount == Config.AfkPunishAfterWarnings)
                     {
                         switch (Config.AfkPunishment)
@@ -353,7 +377,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                                     break;
                                 case 1:
                                     Server.PrintToChatAll(ReplaceVars(player, Localizer["AntiCampSlapMessage"].Value));
-
+                                
                                     Slap(playerPawn, Config.AntiCampSlapDamage);
                                     break;
                             }
@@ -456,7 +480,46 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                       .Replace("{slapAmount}", Config.AntiCampSlapDamage.ToString())
                       .Replace("{zoneName}", player.PlayerPawn?.Value?.LastPlaceName ?? "Unknown");
     }
+
+    private static void RemoveC4(CCSPlayer_WeaponServices services ,CBasePlayerWeapon weapon)
+    {
+        Guard.IsValidEntity(weapon);
+        VirtualFunction.CreateVoid<nint, CBasePlayerWeapon, Vector?, Vector?>(services.Handle, 24)(services.Handle, weapon, null, null);
+        
+        weapon.AddEntityIOEvent("Kill", weapon, delay: 0.2f);
+    }
     
+    private CCSPlayerController? FindNearestPlayer(CCSPlayerController player)
+    {
+        CCSPlayerController? nearestPlayer = null;
+        var firstDistance = 0.0f;
+
+        var players = Utilities.GetPlayers().Where(x => x is {TeamNum: 2, LifeState: (byte)LifeState_t.LIFE_ALIVE, PawnIsAlive: true }).ToList();
+        foreach (var target in players)
+        {
+            var outData = _gPlayerInfo[target.Index];
+            if (target.Index == player.Index || outData.AfkWarningCount > 0)
+                continue;
+            
+            var distance = CalculateDistance(player.PlayerPawn?.Value?.CBodyComponent?.SceneNode?.AbsOrigin ?? new Vector(), target.PlayerPawn?.Value?.CBodyComponent?.SceneNode?.AbsOrigin ?? new Vector());
+            if (nearestPlayer != null && !(distance < firstDistance))
+                continue;
+            
+            nearestPlayer = target;
+            firstDistance = distance;
+        }
+        return nearestPlayer;
+    }
+            
+    private static bool HasC4(CCSPlayerController player)
+    {
+        var weaponServices = player.PlayerPawn?.Value?.WeaponServices;
+        if (weaponServices == null)
+            return false;
+        
+        var matchedWeapon = weaponServices.MyWeapons.FirstOrDefault(w => w.IsValid && w.Value != null && w.Value.DesignerName == "weapon_c4");
+        return matchedWeapon?.IsValid == true;
+    }
     private static void Slap(CBasePlayerPawn? pawn, int damage = 0)
     {
         if (pawn == null || pawn.Health <= 0)
