@@ -40,7 +40,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
     #region definitions
     public override string ModuleAuthor => "NiGHT & K4ryuu (forked by Глеб Хлебов)";
     public override string ModuleName => "AFK Manager";
-    public override string ModuleVersion => "0.2.7";
+    public override string ModuleVersion => "0.2.8";
     
     public required AFKManagerConfig Config { get; set; }
     private CCSGameRules? _gGameRulesProxy;
@@ -277,24 +277,30 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                     if (data.AfkTime < Config.AfkWarnInterval)
                         continue;
                     
-                    //transfer c4 to nearest player
                     if (Config.AfkTransferC4AfterWarnings != 0 && player.TeamNum == 2 && Config.AfkTransferC4AfterWarnings == data.AfkWarningCount &&
                         HasC4(player))
                     {
-                        if(Config.AfkTransferC4OnlyFromBuyZone && !playerPawn.InBuyZone)
-                            continue;
-                        
-                        CCSPlayer_WeaponServices weaponService = new (player.PlayerPawn?.Value?.WeaponServices?.Handle ?? nint.Zero);
-                        CBasePlayerWeapon weapon = new(weaponService.MyWeapons.FirstOrDefault(w => w.IsValid && w.Value != null && w.Value.DesignerName == "weapon_c4")?.Value?.Handle ?? nint.Zero);
-                        if(!weapon.IsValid)
-                            continue;
-                        
-                        var nearestPlayer = FindNearestPlayer(player);
-                        if (nearestPlayer != null)
+                        if (!Config.AfkTransferC4OnlyFromBuyZone || playerPawn.InBuyZone)
                         {
-                            RemoveC4(weaponService,  weapon);
-                            nearestPlayer.GiveNamedItem("weapon_c4");
-                            Server.PrintToChatAll(ReplaceVars(player, Localizer["ChatBombTransfer"].Value.Replace("{targetPlayerName}", nearestPlayer.PlayerName)));
+                            CCSPlayer_WeaponServices weaponService =
+                                new(player.PlayerPawn?.Value?.WeaponServices?.Handle ?? nint.Zero);
+                            CBasePlayerWeapon weapon =
+                                new(weaponService.MyWeapons.FirstOrDefault(w =>
+                                        w.IsValid && w.Value != null && w.Value.DesignerName == "weapon_c4")?.Value
+                                    ?.Handle ?? nint.Zero);
+
+                            if (weapon.IsValid)
+                            {
+                                var nearestPlayer = FindNearestPlayer(player);
+                                if (nearestPlayer != null)
+                                {
+                                    RemoveC4(weaponService, weapon);
+                                    nearestPlayer.GiveNamedItem("weapon_c4");
+                                    Server.PrintToChatAll(ReplaceVars(player,
+                                        Localizer["ChatBombTransfer"].Value
+                                            .Replace("{targetPlayerName}", nearestPlayer.PlayerName)));
+                                }
+                            }
                         }
                     }
                     
