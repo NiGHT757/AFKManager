@@ -17,9 +17,9 @@ Config File located in **/addons/counterstrikesharp/configs/plugins/AFKManager**
 - SpecKickTime: Seconds after the spectator warning before the player is kicked (set to 0 to disable).
 - SpecKickMinPlayers: Minimum number of players required to kick.
 - SpecKickOnlyMovedByPlugin: Only check players in spectator mode who were moved by AFK Manager.
-- SpecSkipFlag: Skip players in spectator mode with this flag during AFK verification.
-- AfkSkipFlag: Skip players with this flag during AFK verification.
-- AntiCampSkipFlag: Skip players with this flag during AntiCamp verification.
+- SpecSkipFlag: Skip players in spectator mode who have any of these flags (`@css/ban`) or groups (`#css/vip`) during AFK verification.
+- AfkSkipFlag: Skip players who have any of these flags (`@css/ban`) or groups (`#css/vip`) during AFK verification.
+- AntiCampSkipFlag: Skip players who have any of these flags (`@css/ban`) or groups (`#css/vip`) during AntiCamp verification.
 - PlaySoundName: Play a sound after a warning is issued (leave empty to disable).
 - SkipWarmup: Skip checks during warmup.
 - AntiCampRadius: Distance check in units.

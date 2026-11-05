@@ -288,7 +288,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 var origin = player.PlayerPawn.Value?.CBodyComponent?.SceneNode?.AbsOrigin;
                 
                 /*  ------------------------------------------->  <-------------------------------------------  */
-                var skipAfk = Config.AfkSkipFlag.Count >= 1 && AdminManager.PlayerHasPermissions(player, Config.AfkSkipFlag.ToArray());
+                var skipAfk = HasSkipFlag(player, Config.AfkSkipFlag);
                 var stationary = data.Angles.X == angles.X && data.Angles.Y == angles.Y
                                  && data.Origin.X == origin.X && data.Origin.Y == origin.Y;
                 var trackingAfk = Config.AfkKickTime > 0 && !skipAfk && stationary;
@@ -356,7 +356,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 }
                 else if (Config.AntiCampPunishTime > 0
                          && !(Config.AntiCampSkipBombPlanted && _gGameRulesProxy.BombPlanted)
-                         && !(Config.AntiCampSkipFlag.Count >= 1 && AdminManager.PlayerHasPermissions(player, Config.AntiCampSkipFlag.ToArray()))
+                         && !HasSkipFlag(player, Config.AntiCampSkipFlag)
                          && player.TeamNum != Config.AntiCampSkipTeam)
                 {
                     if (data.AntiCampAnchor == null && data.Origin != null)
@@ -421,7 +421,7 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
                 && player.TeamNum == 1
                 && playersCount >= Config.SpecKickMinPlayers)
             {
-                if((Config.SpecKickOnlyMovedByPlugin && !data.MovedByPlugin) || (Config.SpecSkipFlag.Count >= 1 && AdminManager.PlayerHasPermissions(player, Config.SpecSkipFlag.ToArray())))
+                if((Config.SpecKickOnlyMovedByPlugin && !data.MovedByPlugin) || HasSkipFlag(player, Config.SpecSkipFlag))
                     continue;
                 
                 data.SpecAfkTime += Config.Timer;
@@ -504,6 +504,26 @@ public class AFKManager : BasePlugin, IPluginConfig<AFKManagerConfig>
         return nearestPlayer;
     }
             
+    // True if the player has any one of the entries: "@domain/flag" is a permission flag, "#domain/group" an admin group.
+    private static bool HasSkipFlag(CCSPlayerController player, List<string> entries)
+    {
+        foreach (var entry in entries)
+        {
+            if (string.IsNullOrWhiteSpace(entry))
+                continue;
+
+            var value = entry.Trim();
+            var match = value[0] == '#'
+                ? AdminManager.PlayerInGroup(player, value)
+                : AdminManager.PlayerHasPermissions(player, value);
+
+            if (match)
+                return true;
+        }
+
+        return false;
+    }
+
     private static bool HasC4(CCSPlayerController player)
     {
         var weaponServices = player.PlayerPawn?.Value?.WeaponServices;
